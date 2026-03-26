@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
-import 'client_chat.dart';
 
 class ClientWorkerProfileScreen extends StatefulWidget {
   final String workerId;
@@ -138,7 +137,7 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: isSubmitting ? null : () async {
-                        FocusScope.of(context).unfocus(); // Close the keyboard
+                        FocusScope.of(context).unfocus(); 
                         if (descController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please describe the job.')));
                           return;
@@ -154,7 +153,7 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
                         setModalState(() => isSubmitting = false);
 
                         if (res['status'] == 'success') {
-                          Navigator.pop(context); // Close sheet
+                          Navigator.pop(context); 
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking Request Sent!')));
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to book')));
@@ -208,7 +207,6 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               children: [
                 Container(
@@ -242,7 +240,6 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
             ),
             const SizedBox(height: 24),
             
-            // Location
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFF3F4F6))),
@@ -264,13 +261,11 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Bio
             const Text('About Provider', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1F2937))),
             const SizedBox(height: 8),
             Text(_profile!['bio'] ?? 'No bio provided.', style: const TextStyle(color: Color(0xFF4B5563), height: 1.5)),
             const SizedBox(height: 32),
 
-            // Portfolio
             const Text('Portfolio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1F2937))),
             const SizedBox(height: 16),
             if (_portfolio.isEmpty)
@@ -316,15 +311,9 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
               child: IconButton(
                 icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF4B5563)),
                 onPressed: () {
-                  // Actually navigate to the chat screen now!
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(
-                      builder: (_) => ClientChatScreen(
-                        workerId: widget.workerId, 
-                        workerName: _profile!['full_name']
-                      )
-                    )
+                  // Reverted to standard SnackBar instruction!
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please request a service to start a chat.'))
                   );
                 },
               ),
