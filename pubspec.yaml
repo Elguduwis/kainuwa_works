@@ -25,7 +25,9 @@ flutter:
   assets:
     - assets/img/
 
-flutter_icons:
-  android: true
-  ios: true
+# FIXED: Using the modern key and turning iOS off since we only compile for Android
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
   image_path: "assets/img/logo.png"
+  remove_alpha_ios: true
