@@ -10,7 +10,6 @@ class ClientService {
     return userId?.toString();
   }
 
-  // Generic helper to catch JSON parsing errors that cause infinite loading
   static Future<Map<String, dynamic>> _safePost(String url, Map<String, dynamic> body) async {
     try {
       final res = await http.post(Uri.parse(url), body: body).timeout(const Duration(seconds: 15));
@@ -18,7 +17,7 @@ class ClientService {
         try {
           return json.decode(res.body);
         } catch (e) {
-          return {'status': 'error', 'message': 'Backend returned invalid data. Check PHP errors.'};
+          return {'status': 'error', 'message': 'Backend returned invalid data.'};
         }
       }
       return {'status': 'error', 'message': 'Server error: ${res.statusCode}'};
@@ -58,5 +57,28 @@ class ClientService {
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
     data['client_id'] = userId; 
     return await _safePost(ApiConfig.createBooking, data);
+  }
+
+  // --- NEW CHAT METHODS ---
+  static Future<Map<String, dynamic>> fetchChatMessages(String bookingId, String lastId) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.chatApi, {
+      'user_id': userId,
+      'action': 'fetch',
+      'booking_id': bookingId,
+      'last_id': lastId
+    });
+  }
+
+  static Future<Map<String, dynamic>> sendChatMessage(String bookingId, String message) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.chatApi, {
+      'user_id': userId,
+      'action': 'send',
+      'booking_id': bookingId,
+      'message': message
+    });
   }
 }

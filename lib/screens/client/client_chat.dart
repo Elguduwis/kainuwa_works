@@ -1,10 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../services/client_service.dart';
 
 class ClientChatScreen extends StatefulWidget {
-  final String workerId;
+  final String bookingId;
   final String workerName;
 
-  const ClientChatScreen({super.key, required this.workerId, required this.workerName});
+  const ClientChatScreen({super.key, required this.bookingId, required this.workerName});
 
   @override
   State<ClientChatScreen> createState() => _ClientChatScreenState();
@@ -12,17 +14,77 @@ class ClientChatScreen extends StatefulWidget {
 
 class _ClientChatScreenState extends State<ClientChatScreen> {
   final TextEditingController _msgController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [
-    {'sender': 'worker', 'text': 'Hello! I saw your booking request. Can you send a picture of the issue?', 'time': '10:00 AM'},
-  ];
+  final ScrollController _scrollController = ScrollController();
+  
+  List<dynamic> _messages = [];
+  Timer? _pollingTimer;
+  int _lastMessageId = 0;
+  bool _isFetching = false;
 
-  void _sendMessage() {
-    if (_msgController.text.trim().isEmpty) return;
-    setState(() {
-      _messages.add({'sender': 'me', 'text': _msgController.text.trim(), 'time': 'Just now'});
-      _msgController.clear();
+  @override
+  void initState() {
+    super.initState();
+    _fetchMessages();
+    
+    // SMART POLLING: Ping the database every 3 seconds for new messages
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _fetchMessages();
     });
-    // Placeholder: Need to wire up ajax_chat.php equivalent API later
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel(); // Critical: Stop polling when they leave the screen
+    _msgController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent + 200,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Future<void> _fetchMessages() async {
+    if (_isFetching) return;
+    _isFetching = true;
+
+    final res = await ClientService.fetchChatMessages(widget.bookingId, _lastMessageId.toString());
+    
+    if (mounted && res['status'] == 'success') {
+      final newMessages = res['messages'] as List;
+      if (newMessages.isNotEmpty) {
+        setState(() {
+          _messages.addAll(newMessages);
+          _lastMessageId = newMessages.last['id'];
+        });
+        // Wait a tiny fraction of a second for UI to build before scrolling down
+        Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+      }
+    }
+    _isFetching = false;
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _msgController.text.trim();
+    if (text.isEmpty) return;
+
+    _msgController.clear();
+    FocusScope.of(context).unfocus(); // Drops the keyboard
+
+    final res = await ClientService.sendChatMessage(widget.bookingId, text);
+    if (res['status'] == 'success') {
+      _fetchMessages(); // Instantly fetch the message we just sent
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to send')));
+      }
+    }
   }
 
   @override
@@ -41,7 +103,7 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
               children: [
                 CircleAvatar(
                   backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                  child: Text(widget.workerName[0], style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                  child: Text(widget.workerName[0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
                 ),
                 Positioned(
                   bottom: 0, right: 0,
@@ -50,12 +112,14 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
               ],
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(widget.workerName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
-                const Text('Online', style: TextStyle(fontSize: 12, color: Colors.green)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.workerName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)), overflow: TextOverflow.ellipsis),
+                  const Text('Online', style: TextStyle(fontSize: 12, color: Colors.green)),
+                ],
+              ),
             ),
           ],
         ),
@@ -63,40 +127,43 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                final isMe = msg['sender'] == 'me';
-                return Align(
-                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isMe ? theme.colorScheme.primary : Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(20),
-                        topRight: const Radius.circular(20),
-                        bottomLeft: Radius.circular(isMe ? 20 : 0),
-                        bottomRight: Radius.circular(isMe ? 0 : 20),
+            child: _messages.isEmpty
+              ? const Center(child: Text('Start the negotiation!', style: TextStyle(color: Color(0xFF9CA3AF))))
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = _messages[index];
+                    final isMe = msg['is_mine'] == true;
+                    return Align(
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isMe ? theme.colorScheme.primary : Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(20),
+                            topRight: const Radius.circular(20),
+                            bottomLeft: Radius.circular(isMe ? 20 : 0),
+                            bottomRight: Radius.circular(isMe ? 0 : 20),
+                          ),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5, offset: const Offset(0, 2))],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          children: [
+                            Text(msg['text'], style: TextStyle(color: isMe ? Colors.white : const Color(0xFF1F2937), fontSize: 15)),
+                            const SizedBox(height: 4),
+                            Text(msg['time'], style: TextStyle(color: isMe ? Colors.white70 : const Color(0xFF9CA3AF), fontSize: 10)),
+                          ],
+                        ),
                       ),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5, offset: const Offset(0, 2))],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                      children: [
-                        Text(msg['text'], style: TextStyle(color: isMe ? Colors.white : const Color(0xFF1F2937), fontSize: 15)),
-                        const SizedBox(height: 4),
-                        Text(msg['time'], style: TextStyle(color: isMe ? Colors.white70 : const Color(0xFF9CA3AF), fontSize: 10)),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
           ),
           Container(
             padding: const EdgeInsets.all(16),
@@ -108,6 +175,7 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _msgController,
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),

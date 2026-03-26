@@ -9,4 +9,5 @@ class ApiConfig {
   static const String getProviders = '$baseUrl/get_providers.php';
   static const String getWorkerProfile = '$baseUrl/get_worker_profile.php';
   static const String createBooking = '$baseUrl/create_booking.php';
+  static const String chatApi = '$baseUrl/chat_api.php';
 }

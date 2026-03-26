@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
+import 'client_chat.dart';
 
 class ClientBookingsScreen extends StatefulWidget {
   const ClientBookingsScreen({super.key});
@@ -19,7 +20,6 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
     _loadData();
   }
 
-  // BULLETPROOF PARSER: Safely converts Strings or Numbers into a Double
   double _parseAmount(dynamic amount) {
     if (amount == null) return 0.0;
     if (amount is num) return amount.toDouble();
@@ -54,10 +54,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
             labelColor: theme.colorScheme.primary,
             unselectedLabelColor: const Color(0xFF6B7280),
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            tabs: const [
-              Tab(text: 'Active Jobs'),
-              Tab(text: 'History'),
-            ],
+            tabs: const [Tab(text: 'Active Jobs'), Tab(text: 'History')],
           ),
         ),
         body: _isLoading 
@@ -86,10 +83,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
               children: [
                 Icon(isActive ? Icons.handyman_rounded : Icons.history_rounded, size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 16),
-                Text(
-                  isActive ? 'No active bookings' : 'No past bookings',
-                  style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
-                ),
+                Text(isActive ? 'No active bookings' : 'No past bookings', style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -105,55 +99,77 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final b = list[index];
-          final parsedAmount = _parseAmount(b['amount']); // Safe Parse!
+          final parsedAmount = _parseAmount(b['amount']); 
 
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(b['category_name'] ?? 'Service', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(8)),
-                      child: Text(
-                        (b['status'] ?? '').toUpperCase(), 
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusColor(b['status'])),
+          return GestureDetector(
+            onTap: () {
+              if (isActive) {
+                // Tapping an active booking takes you to the chat negotiation!
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ClientChatScreen(
+                      bookingId: b['id'].toString(),
+                      workerName: b['worker_name'] ?? 'Provider',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(b['category_name'] ?? 'Service', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(8)),
+                        child: Text(
+                          (b['status'] ?? '').toUpperCase(), 
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusColor(b['status'])),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.person_outline_rounded, size: 16, color: Color(0xFF9CA3AF)),
-                    const SizedBox(width: 6),
-                    Text(b['worker_name'] ?? 'Provider', style: const TextStyle(color: Color(0xFF4B5563))),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF9CA3AF)),
-                        const SizedBox(width: 6),
-                        Text(b['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: const TextStyle(color: Color(0xFF4B5563), fontSize: 12)),
-                      ],
-                    ),
-                    Text('₦${parsedAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.person_outline_rounded, size: 16, color: Color(0xFF9CA3AF)),
+                      const SizedBox(width: 6),
+                      Text(b['worker_name'] ?? 'Provider', style: const TextStyle(color: Color(0xFF4B5563))),
+                      if (isActive) ...[
+                        const Spacer(),
+                        const Icon(Icons.chat_bubble_rounded, size: 16, color: Color(0xFF7351FF)),
+                        const SizedBox(width: 4),
+                        const Text('Chat', style: TextStyle(color: Color(0xFF7351FF), fontSize: 12, fontWeight: FontWeight.bold)),
+                      ]
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF9CA3AF)),
+                          const SizedBox(width: 6),
+                          Text(b['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: const TextStyle(color: Color(0xFF4B5563), fontSize: 12)),
+                        ],
+                      ),
+                      Text('₦${parsedAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },
