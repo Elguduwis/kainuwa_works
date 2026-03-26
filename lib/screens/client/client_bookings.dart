@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
+import '../../services/client_service.dart';
 
-class ClientBookingsScreen extends StatelessWidget {
+class ClientBookingsScreen extends StatefulWidget {
   const ClientBookingsScreen({super.key});
+
+  @override
+  State<ClientBookingsScreen> createState() => _ClientBookingsScreenState();
+}
+
+class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
+  bool _isLoading = true;
+  List<dynamic> _active = [];
+  List<dynamic> _history = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final data = await ClientService.fetchBookings();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        if (data['status'] == 'success') {
+          _active = data['active_bookings'] ?? [];
+          _history = data['history_bookings'] ?? [];
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,46 +53,113 @@ class ClientBookingsScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildBookingList(isActive: true),
-            _buildBookingList(isActive: false),
-          ],
-        ),
+        body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
+              children: [
+                _buildBookingList(_active, isActive: true),
+                _buildBookingList(_history, isActive: false),
+              ],
+            ),
       ),
     );
   }
 
-  Widget _buildBookingList({required bool isActive}) {
-    // Empty state for now until we connect the API
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isActive ? Icons.handyman_rounded : Icons.history_rounded,
-            size: 64,
-            color: Colors.grey[300],
+  Widget _buildBookingList(List<dynamic> list, {required bool isActive}) {
+    if (list.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Container(
+            height: 400,
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(isActive ? Icons.handyman_rounded : Icons.history_rounded, size: 64, color: Colors.grey[300]),
+                const SizedBox(height: 16),
+                Text(
+                  isActive ? 'No active bookings' : 'No past bookings',
+                  style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            isActive ? 'No active bookings' : 'No past bookings',
-            style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 24),
-          if (isActive)
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF3F4F6),
-                foregroundColor: const Color(0xFF1F2937),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Find a Provider'),
-            )
-        ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: list.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final b = list[index];
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(b['category_name'] ?? 'Service', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(8)),
+                      child: Text(
+                        (b['status'] ?? '').toUpperCase(), 
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusColor(b['status'])),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.person_outline_rounded, size: 16, color: Color(0xFF9CA3AF)),
+                    const SizedBox(width: 6),
+                    Text(b['worker_name'] ?? 'Provider', style: const TextStyle(color: Color(0xFF4B5563))),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF9CA3AF)),
+                        const SizedBox(width: 6),
+                        Text(b['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: const TextStyle(color: Color(0xFF4B5563), fontSize: 12)),
+                      ],
+                    ),
+                    Text('₦${(b['amount'] as num).toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status) {
+      case 'completed': return Colors.green;
+      case 'in_progress': return Colors.blue;
+      case 'pending': return Colors.orange;
+      case 'cancelled': return Colors.red;
+      case 'disputed': return Colors.purple;
+      default: return Colors.grey;
+    }
   }
 }
