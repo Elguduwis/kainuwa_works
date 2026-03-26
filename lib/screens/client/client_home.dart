@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import 'client_bookings.dart';
+import 'client_wallet.dart';
+import 'client_settings.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -24,7 +27,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _userName = prefs.getString('full_name') ?? 'Client';
-      // Grab just the first name for a friendlier greeting
       _userName = _userName.split(' ')[0];
     });
   }
@@ -39,12 +41,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Placeholder screens for the bottom nav
+    // Array of the newly created screens
     final List<Widget> pages = [
       _buildHomeContent(theme),
-      const Center(child: Text('My Bookings & Escrow')),
-      const Center(child: Text('Wallet')),
-      const Center(child: Text('Profile Settings')),
+      const ClientBookingsScreen(),
+      const ClientWalletScreen(),
+      const ClientSettingsScreen(),
     ];
 
     return Scaffold(
@@ -85,7 +87,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -104,15 +105,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ],
               ),
               GestureDetector(
-                onTap: () async {
-                  await AuthService.logout();
-                  if (!mounted) return;
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                onTap: () {
+                  // Direct shortcut to profile via navbar
+                  _onItemTapped(3); 
                 },
                 child: CircleAvatar(
                   radius: 24,
                   backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                  child: Icon(Icons.logout_rounded, color: theme.colorScheme.primary, size: 20),
+                  child: Text(
+                    _userName.isNotEmpty ? _userName[0].toUpperCase() : 'C',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 18),
+                  ),
                 ),
               ),
             ],
@@ -136,15 +139,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 border: InputBorder.none,
                 icon: Icon(Icons.search_rounded, color: theme.colorScheme.primary),
               ),
-              onSubmitted: (value) {
-                // TODO: Navigate to Search Results Screen
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Searching for: $value')));
-              },
             ),
           ),
           const SizedBox(height: 32),
 
-          // Categories Section
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -179,7 +177,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           ),
           const SizedBox(height: 32),
 
-          // Escrow Trust Banner
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -221,9 +218,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   Widget _buildCategoryItem(IconData icon, String label, ThemeData theme) {
     return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Selected category: $label')));
-      },
+      onTap: () {},
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
