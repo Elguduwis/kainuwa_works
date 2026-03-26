@@ -20,14 +20,21 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
     _loadData();
   }
 
+  // BULLETPROOF PARSER: Safely converts Strings or Numbers into a Double
+  double _parseAmount(dynamic amount) {
+    if (amount == null) return 0.0;
+    if (amount is num) return amount.toDouble();
+    return double.tryParse(amount.toString()) ?? 0.0;
+  }
+
   Future<void> _loadData() async {
     final data = await ClientService.fetchWallet();
     if (mounted) {
       setState(() {
         _isLoading = false;
         if (data['status'] == 'success') {
-          _balance = (data['wallet']['balance'] as num).toDouble();
-          _escrow = (data['wallet']['escrow_balance'] as num).toDouble();
+          _balance = _parseAmount(data['wallet']['balance']);
+          _escrow = _parseAmount(data['wallet']['escrow_balance']);
           _transactions = data['transactions'] ?? [];
         }
       });
@@ -151,6 +158,8 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
                       itemBuilder: (context, index) {
                         final tx = _transactions[index];
                         final isDeposit = tx['type'] == 'deposit' || tx['type'] == 'refund';
+                        final parsedAmount = _parseAmount(tx['amount']); // Safe Parse!
+                        
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
@@ -163,7 +172,7 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
                           title: Text(tx['description'] ?? 'Transaction', style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(tx['status']?.toUpperCase() ?? 'PENDING', style: TextStyle(fontSize: 10, color: tx['status'] == 'successful' ? Colors.green : Colors.orange)),
                           trailing: Text(
-                            '${isDeposit ? '+' : '-'}₦${(tx['amount'] as num).toStringAsFixed(2)}',
+                            '${isDeposit ? '+' : '-'}₦${parsedAmount.toStringAsFixed(2)}',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDeposit ? Colors.green : Colors.red),
                           ),
                         );

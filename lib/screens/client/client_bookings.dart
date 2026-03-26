@@ -19,6 +19,13 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
     _loadData();
   }
 
+  // BULLETPROOF PARSER: Safely converts Strings or Numbers into a Double
+  double _parseAmount(dynamic amount) {
+    if (amount == null) return 0.0;
+    if (amount is num) return amount.toDouble();
+    return double.tryParse(amount.toString()) ?? 0.0;
+  }
+
   Future<void> _loadData() async {
     final data = await ClientService.fetchBookings();
     if (mounted) {
@@ -98,6 +105,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final b = list[index];
+          final parsedAmount = _parseAmount(b['amount']); // Safe Parse!
+
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -141,7 +150,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> {
                         Text(b['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: const TextStyle(color: Color(0xFF4B5563), fontSize: 12)),
                       ],
                     ),
-                    Text('₦${(b['amount'] as num).toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
+                    Text('₦${parsedAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
                   ],
                 ),
               ],
