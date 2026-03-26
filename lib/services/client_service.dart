@@ -45,4 +45,17 @@ class ClientService {
       return {'status': 'error', 'message': 'Connection failed'};
     }
   }
+
+  static Future<Map<String, dynamic>> fetchProviders({String query = '', String categoryId = '0'}) async {
+    try {
+      final res = await http.post(
+        Uri.parse(ApiConfig.getProviders), 
+        body: {'query': query, 'category_id': categoryId}
+      );
+      if (res.statusCode == 200) return json.decode(res.body);
+      return {'status': 'error', 'message': 'Server error'};
+    } catch (e) {
+      return {'status': 'error', 'message': 'Connection failed'};
+    }
+  }
 }

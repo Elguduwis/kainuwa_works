@@ -6,4 +6,5 @@ class ApiConfig {
   static const String getWallet = '$baseUrl/get_wallet.php';
   static const String getClientBookings = '$baseUrl/get_client_bookings.php';
   static const String getClientProfile = '$baseUrl/get_client_profile.php';
+  static const String getProviders = '$baseUrl/get_providers.php';
 }

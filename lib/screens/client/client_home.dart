@@ -5,6 +5,7 @@ import '../auth/login_screen.dart';
 import 'client_bookings.dart';
 import 'client_wallet.dart';
 import 'client_settings.dart';
+import 'client_search.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -37,11 +38,23 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     });
   }
 
+  void _navigateToSearch({String query = '', String categoryId = '0', String categoryName = 'Search Providers'}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ClientSearchScreen(
+          initialQuery: query,
+          categoryId: categoryId,
+          categoryName: categoryName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Array of the newly created screens
     final List<Widget> pages = [
       _buildHomeContent(theme),
       const ClientBookingsScreen(),
@@ -105,10 +118,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ],
               ),
               GestureDetector(
-                onTap: () {
-                  // Direct shortcut to profile via navbar
-                  _onItemTapped(3); 
-                },
+                onTap: () => _onItemTapped(3),
                 child: CircleAvatar(
                   radius: 24,
                   backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
@@ -133,6 +143,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               ],
             ),
             child: TextField(
+              textInputAction: TextInputAction.search,
+              onSubmitted: (value) {
+                if (value.trim().isNotEmpty) {
+                  _navigateToSearch(query: value.trim());
+                }
+              },
               decoration: InputDecoration(
                 hintText: 'Search for plumbers, electricians...',
                 hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
@@ -151,7 +167,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1F2937)),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => _navigateToSearch(categoryName: 'All Providers'),
                 child: Text('See All', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -165,14 +181,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
             children: [
-              _buildCategoryItem(Icons.water_drop_rounded, 'Plumber', theme),
-              _buildCategoryItem(Icons.electrical_services_rounded, 'Electrician', theme),
-              _buildCategoryItem(Icons.cleaning_services_rounded, 'Cleaning', theme),
-              _buildCategoryItem(Icons.build_rounded, 'Generator', theme),
-              _buildCategoryItem(Icons.format_paint_rounded, 'Painter', theme),
-              _buildCategoryItem(Icons.handyman_rounded, 'Carpenter', theme),
-              _buildCategoryItem(Icons.ac_unit_rounded, 'AC Repair', theme),
-              _buildCategoryItem(Icons.more_horiz_rounded, 'More', theme),
+              // Assuming standard category IDs based on typical database inserts, tweak if needed
+              _buildCategoryItem(Icons.water_drop_rounded, 'Plumber', theme, '1'),
+              _buildCategoryItem(Icons.electrical_services_rounded, 'Electrician', theme, '2'),
+              _buildCategoryItem(Icons.cleaning_services_rounded, 'Cleaning', theme, '3'),
+              _buildCategoryItem(Icons.build_rounded, 'Generator', theme, '4'),
+              _buildCategoryItem(Icons.format_paint_rounded, 'Painter', theme, '5'),
+              _buildCategoryItem(Icons.handyman_rounded, 'Carpenter', theme, '6'),
+              _buildCategoryItem(Icons.ac_unit_rounded, 'AC Repair', theme, '7'),
+              _buildCategoryItem(Icons.more_horiz_rounded, 'More', theme, '0'),
             ],
           ),
           const SizedBox(height: 32),
@@ -216,9 +233,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
-  Widget _buildCategoryItem(IconData icon, String label, ThemeData theme) {
+  Widget _buildCategoryItem(IconData icon, String label, ThemeData theme, String categoryId) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => _navigateToSearch(categoryId: categoryId, categoryName: label),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
