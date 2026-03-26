@@ -1,8 +1,6 @@
 class ApiConfig {
-  static const String baseUrl = 'https://works.kainuwa.africa/api';
+  static const String baseUrl = 'https://works.kainuwa.africa/api/mobile';
   
-  // Endpoint definitions
   static const String login = '$baseUrl/auth_login.php';
-  static const String getProviders = '$baseUrl/get_providers.php';
-  // We will add more endpoints here as we build the PHP APIs
+  static const String register = '$baseUrl/auth_register.php';
 }
