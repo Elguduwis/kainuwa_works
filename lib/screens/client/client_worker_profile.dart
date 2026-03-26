@@ -138,7 +138,7 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: isSubmitting ? null : () async {
-                        FocusScope.of(context).unfocus();
+                        FocusScope.of(context).unfocus(); // Close the keyboard
                         if (descController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please describe the job.')));
                           return;
@@ -295,11 +295,11 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
                 itemBuilder: (ctx, idx) {
                   return Container(
                     decoration: BoxDecoration(color: const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(16)),
-                    child: const Center(child: Icon(Icons.image, color: Colors.white)), // Placeholder for actual image
+                    child: const Center(child: Icon(Icons.image, color: Colors.white)), 
                   );
                 },
               ),
-            const SizedBox(height: 80), // Padding for bottom bar
+            const SizedBox(height: 80), 
           ],
         ),
       ),
@@ -316,7 +316,16 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
               child: IconButton(
                 icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF4B5563)),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chat opens after booking request.')));
+                  // Actually navigate to the chat screen now!
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(
+                      builder: (_) => ClientChatScreen(
+                        workerId: widget.workerId, 
+                        workerName: _profile!['full_name']
+                      )
+                    )
+                  );
                 },
               ),
             ),
