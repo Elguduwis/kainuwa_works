@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
-import 'client_worker_profile.dart';
+import 'client_worker_profile.dart'; // We are explicitly importing the profile screen here now
 
 class ClientSearchScreen extends StatefulWidget {
   final String initialQuery;
@@ -63,7 +63,6 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar Area
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
             child: Container(
@@ -94,7 +93,6 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
             ),
           ),
           
-          // Results Area
           Expanded(
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator())
@@ -121,7 +119,7 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: const Color(0xFFF3F4F6), shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: Color(0xFFF3F4F6), shape: BoxShape.circle),
             child: const Icon(Icons.search_off_rounded, size: 48, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 24),
@@ -137,11 +135,9 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
     final double rating = double.tryParse(provider['average_rating'].toString()) ?? 0.0;
     final int reviews = int.tryParse(provider['total_reviews'].toString()) ?? 0;
     
-    // Status Logic
     final String status = provider['availability_status'] ?? 'offline';
     final Color statusColor = status == 'available' ? Colors.green : (status == 'busy' ? Colors.orange : Colors.grey);
 
-    // Location Formatting
     final List<String> locParts = [];
     if (provider['area'] != null && provider['area'].toString().isNotEmpty) locParts.add(provider['area']);
     if (provider['lga'] != null && provider['lga'].toString().isNotEmpty) locParts.add(provider['lga']);
@@ -164,7 +160,6 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar
               Container(
                 width: 64,
                 height: 64,
@@ -181,7 +176,6 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
               ),
               const SizedBox(width: 16),
               
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,8 +260,14 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
               ),
               const SizedBox(width: 16),
               ElevatedButton(
+                // THIS IS THE FIX: It now navigates properly instead of showing a snackbar
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Opening profile for ${provider['full_name']}...')));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ClientWorkerProfileScreen(workerId: provider['id'].toString()),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
