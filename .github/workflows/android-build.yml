@@ -32,11 +32,26 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
       
-    - name: Build Universal APK
+    - name: Build Google Play App Bundle (.aab)
+      run: flutter build appbundle --release
+      
+    - name: Build Optimized APK (.apk)
       run: flutter build apk --release
         
-    - name: Upload Universal APK
+    - name: Secure & Rename APK
+      run: |
+        # This bypasses the buggy Flutter APK locator
+        APK_PATH=$(find build -type f -name "*.apk" | grep -v "test" | head -n 1)
+        mv "$APK_PATH" Optimized-Release.apk
+        
+    - name: Upload App Bundle
       uses: actions/upload-artifact@v4
       with:
-        name: Kainuwa-Works-Universal-APK
-        path: build/app/outputs/flutter-apk/app-release.apk
+        name: PlayStore-Release-AAB
+        path: build/app/outputs/bundle/release/app-release.aab
+        
+    - name: Upload Optimized APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Direct-Install-APK
+        path: Optimized-Release.apk
