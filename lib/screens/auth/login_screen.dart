@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
+import '../client/client_home.dart';
+import '../worker/worker_home.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,15 +18,37 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   void _handleLogin() async {
+    final identifier = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (identifier.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter both email/phone and password')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
-    // TODO: Connect to backend API
-    await Future.delayed(const Duration(seconds: 2));
+    final result = await AuthService.login(identifier, password);
     setState(() => _isLoading = false);
     
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('API Connection Pending...')),
-    );
+
+    if (result['status'] == 'success') {
+      final role = result['user']['role'];
+      if (role == 'worker') {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WorkerHomeScreen()));
+      } else {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ClientHomeScreen()));
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Login failed'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
@@ -39,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
                 Icon(Icons.handyman_rounded, size: 64, color: theme.colorScheme.primary),
                 const SizedBox(height: 24),
                 const Text(
@@ -55,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Form Container
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -102,7 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 32),
                       
-                      // Login Button
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -124,7 +146,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Footer
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

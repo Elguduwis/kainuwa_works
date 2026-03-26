@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
+import '../client/client_home.dart';
+import '../worker/worker_home.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -8,8 +11,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  int _currentStep = 0; // 0 for Role Selection, 1 for Form
-  String? _selectedRole; // 'client' or 'worker'
+  int _currentStep = 0; 
+  String? _selectedRole; 
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -19,15 +22,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   void _handleRegister() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text;
+
+    if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
-    // TODO: Connect to backend API
-    await Future.delayed(const Duration(seconds: 2));
+    
+    final result = await AuthService.register({
+      'full_name': name,
+      'email': email,
+      'phone': phone,
+      'password': password,
+      'role': _selectedRole ?? 'client',
+    });
+
     setState(() => _isLoading = false);
     
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Registration Pending for $_selectedRole...')),
-    );
+
+    if (result['status'] == 'success') {
+      if (_selectedRole == 'worker') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const WorkerHomeScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const ClientHomeScreen()),
+          (route) => false,
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Registration failed'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
@@ -113,7 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       onTap: () {
         setState(() {
           _selectedRole = role;
-          _currentStep = 1; // Auto-advance
+          _currentStep = 1;
         });
       },
       child: Container(
