@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/client_service.dart';
+import 'web_dashboard_screen.dart';
 
 class ClientWalletScreen extends StatefulWidget {
   const ClientWalletScreen({super.key});
@@ -20,7 +22,6 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
     _loadData();
   }
 
-  // BULLETPROOF PARSER: Safely converts Strings or Numbers into a Double
   double _parseAmount(dynamic amount) {
     if (amount == null) return 0.0;
     if (amount is num) return amount.toDouble();
@@ -41,15 +42,36 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
     }
   }
 
+  // The Secure Architecture Trigger
+  void _startTopUpProcess() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+    if (userId == null) return;
+    
+    // Construct the secure auth URL targeting the web wallet page
+    final authUrl = 'https://works.kainuwa.africa/api/mobile/webview_auth.php?user_id=$userId&redirect=/client/wallet.php';
+    
+    // Open the WebView and WAIT for the user to finish and close it
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WebDashboardScreen(url: authUrl, title: 'Fund Wallet via Paystack'),
+      ),
+    );
+    
+    // Immediately refresh the native data when they return
+    if (mounted) {
+      setState(() => _isLoading = true);
+      _loadData(); 
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Escrow Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: Colors.transparent,
-      ),
+      appBar: AppBar(title: const Text('Escrow Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), backgroundColor: Colors.transparent),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
@@ -61,19 +83,12 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Dual Balance Card
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1F2937), Color(0xFF111827)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      gradient: const LinearGradient(colors: [Color(0xFF1F2937), Color(0xFF111827)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                       borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 10)),
-                      ],
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 10))],
                     ),
                     child: Column(
                       children: [
@@ -114,14 +129,11 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Top Up Button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paystack Top-up initiating...')));
-                      },
+                      onPressed: _startTopUpProcess,
                       icon: const Icon(Icons.add_rounded),
                       label: const Text('Fund Wallet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
@@ -138,14 +150,14 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
                   const SizedBox(height: 16),
                   
                   if (_transactions.isEmpty)
-                    Center(
+                    const Center(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 40.0),
+                        padding: EdgeInsets.only(top: 40.0),
                         child: Column(
                           children: [
-                            Icon(Icons.receipt_long_rounded, size: 48, color: Colors.grey[300]),
-                            const SizedBox(height: 16),
-                            const Text('No transactions yet.', style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+                            Icon(Icons.receipt_long_rounded, size: 48, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('No transactions yet.', style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
                           ],
                         ),
                       ),
@@ -158,16 +170,13 @@ class _ClientWalletScreenState extends State<ClientWalletScreen> {
                       itemBuilder: (context, index) {
                         final tx = _transactions[index];
                         final isDeposit = tx['type'] == 'deposit' || tx['type'] == 'refund';
-                        final parsedAmount = _parseAmount(tx['amount']); // Safe Parse!
+                        final parsedAmount = _parseAmount(tx['amount']); 
                         
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
                             backgroundColor: isDeposit ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                            child: Icon(
-                              isDeposit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                              color: isDeposit ? Colors.green : Colors.red,
-                            ),
+                            child: Icon(isDeposit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: isDeposit ? Colors.green : Colors.red),
                           ),
                           title: Text(tx['description'] ?? 'Transaction', style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(tx['status']?.toUpperCase() ?? 'PENDING', style: TextStyle(fontSize: 10, color: tx['status'] == 'successful' ? Colors.green : Colors.orange)),

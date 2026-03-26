@@ -10,77 +10,53 @@ class ClientService {
     return userId?.toString();
   }
 
+  // Generic helper to catch JSON parsing errors that cause infinite loading
+  static Future<Map<String, dynamic>> _safePost(String url, Map<String, dynamic> body) async {
+    try {
+      final res = await http.post(Uri.parse(url), body: body).timeout(const Duration(seconds: 15));
+      if (res.statusCode == 200) {
+        try {
+          return json.decode(res.body);
+        } catch (e) {
+          return {'status': 'error', 'message': 'Backend returned invalid data. Check PHP errors.'};
+        }
+      }
+      return {'status': 'error', 'message': 'Server error: ${res.statusCode}'};
+    } catch (e) {
+      return {'status': 'error', 'message': 'Connection timed out or failed.'};
+    }
+  }
+
   static Future<Map<String, dynamic>> fetchWallet() async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    try {
-      final res = await http.post(Uri.parse(ApiConfig.getWallet), body: {'user_id': userId});
-      if (res.statusCode == 200) return json.decode(res.body);
-      return {'status': 'error', 'message': 'Server error'};
-    } catch (e) {
-      return {'status': 'error', 'message': 'Connection failed'};
-    }
+    return await _safePost(ApiConfig.getWallet, {'user_id': userId});
   }
 
   static Future<Map<String, dynamic>> fetchBookings() async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    try {
-      final res = await http.post(Uri.parse(ApiConfig.getClientBookings), body: {'user_id': userId});
-      if (res.statusCode == 200) return json.decode(res.body);
-      return {'status': 'error', 'message': 'Server error'};
-    } catch (e) {
-      return {'status': 'error', 'message': 'Connection failed'};
-    }
+    return await _safePost(ApiConfig.getClientBookings, {'user_id': userId});
   }
 
   static Future<Map<String, dynamic>> fetchProfile() async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    try {
-      final res = await http.post(Uri.parse(ApiConfig.getClientProfile), body: {'user_id': userId});
-      if (res.statusCode == 200) return json.decode(res.body);
-      return {'status': 'error', 'message': 'Server error'};
-    } catch (e) {
-      return {'status': 'error', 'message': 'Connection failed'};
-    }
+    return await _safePost(ApiConfig.getClientProfile, {'user_id': userId});
   }
 
   static Future<Map<String, dynamic>> fetchProviders({String query = '', String categoryId = '0'}) async {
-    try {
-      final res = await http.post(
-        Uri.parse(ApiConfig.getProviders), 
-        body: {'query': query, 'category_id': categoryId}
-      );
-      if (res.statusCode == 200) return json.decode(res.body);
-      return {'status': 'error', 'message': 'Server error'};
-    } catch (e) {
-      return {'status': 'error', 'message': 'Connection failed'};
-    }
+    return await _safePost(ApiConfig.getProviders, {'query': query, 'category_id': categoryId});
   }
 
   static Future<Map<String, dynamic>> fetchWorkerProfile(String workerId) async {
-    try {
-      final res = await http.post(Uri.parse(ApiConfig.getWorkerProfile), body: {'worker_id': workerId});
-      if (res.statusCode == 200) return json.decode(res.body);
-      return {'status': 'error', 'message': 'Server error'};
-    } catch (e) {
-      return {'status': 'error', 'message': 'Connection failed'};
-    }
+    return await _safePost(ApiConfig.getWorkerProfile, {'worker_id': workerId});
   }
 
   static Future<Map<String, dynamic>> createBooking(Map<String, String> data) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    
-    data['client_id'] = userId; // Inject the logged-in user's ID
-    
-    try {
-      final res = await http.post(Uri.parse(ApiConfig.createBooking), body: data);
-      if (res.statusCode == 200) return json.decode(res.body);
-      return {'status': 'error', 'message': 'Server error'};
-    } catch (e) {
-      return {'status': 'error', 'message': 'Connection failed'};
-    }
+    data['client_id'] = userId; 
+    return await _safePost(ApiConfig.createBooking, data);
   }
 }

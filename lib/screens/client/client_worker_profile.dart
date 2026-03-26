@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
+import 'client_chat.dart';
 
 class ClientWorkerProfileScreen extends StatefulWidget {
   final String workerId;
@@ -137,6 +138,7 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: isSubmitting ? null : () async {
+                        FocusScope.of(context).unfocus();
                         if (descController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please describe the job.')));
                           return;
