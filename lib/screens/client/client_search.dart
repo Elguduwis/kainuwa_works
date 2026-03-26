@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
+import 'client_worker_profile.dart';
 
 class ClientSearchScreen extends StatefulWidget {
   final String initialQuery;

@@ -7,4 +7,6 @@ class ApiConfig {
   static const String getClientBookings = '$baseUrl/get_client_bookings.php';
   static const String getClientProfile = '$baseUrl/get_client_profile.php';
   static const String getProviders = '$baseUrl/get_providers.php';
+  static const String getWorkerProfile = '$baseUrl/get_worker_profile.php';
+  static const String createBooking = '$baseUrl/create_booking.php';
 }
