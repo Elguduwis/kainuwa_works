@@ -32,6 +32,12 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
       
+    - name: Set Custom Package Name (com.kainuwa.africa)
+      run: flutter pub run change_app_package_name:main com.kainuwa.africa
+      
+    - name: Generate Custom App Icon
+      run: flutter pub run flutter_launcher_icons
+      
     - name: Build Google Play App Bundle (.aab)
       run: flutter build appbundle --release
       
@@ -40,7 +46,6 @@ jobs:
         
     - name: Secure & Rename APK
       run: |
-        # This bypasses the buggy Flutter APK locator
         APK_PATH=$(find build -type f -name "*.apk" | grep -v "test" | head -n 1)
         mv "$APK_PATH" Optimized-Release.apk
         
