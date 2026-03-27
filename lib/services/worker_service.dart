@@ -31,4 +31,14 @@ class WorkerService {
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
     return await _safePost(ApiConfig.getWorkerDashboard, {'user_id': userId});
   }
+
+  static Future<Map<String, dynamic>> updateBookingStatus(String bookingId, String status) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.updateBookingStatus, {
+      'user_id': userId,
+      'booking_id': bookingId,
+      'status': status
+    });
+  }
 }

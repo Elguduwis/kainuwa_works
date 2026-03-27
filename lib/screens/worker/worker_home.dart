@@ -14,6 +14,7 @@ class WorkerHomeScreen extends StatefulWidget {
 class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   int _selectedIndex = 0;
   bool _isLoading = true;
+  bool _isProcessingAction = false; // Prevents double-taps on Accept/Decline
   
   Map<String, dynamic>? _profile;
   Map<String, dynamic>? _wallet;
@@ -41,6 +42,22 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     }
   }
 
+  Future<void> _handleBookingAction(String bookingId, String status) async {
+    setState(() => _isProcessingAction = true);
+    
+    final res = await WorkerService.updateBookingStatus(bookingId, status);
+    
+    if (mounted) {
+      setState(() => _isProcessingAction = false);
+      if (res['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Success!'), backgroundColor: status == 'accepted' ? Colors.green : Colors.black87));
+        _loadDashboard(); // Refresh the list
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Action failed'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -51,7 +68,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Placeholder screens for the other tabs until we build them
     final List<Widget> pages = [
       _buildHomeContent(theme),
       const Center(child: Text('My Jobs (Active & History)')),
@@ -64,7 +80,16 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
       body: SafeArea(
         child: _isLoading 
             ? const Center(child: CircularProgressIndicator()) 
-            : pages[_selectedIndex],
+            : Stack(
+                children: [
+                  pages[_selectedIndex],
+                  if (_isProcessingAction)
+                    Container(
+                      color: Colors.black.withOpacity(0.3),
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                ],
+              ),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -108,7 +133,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -151,7 +175,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Quick Stats Cards
             Row(
               children: [
                 Expanded(
@@ -200,7 +223,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Incoming Requests Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -239,6 +261,8 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 separatorBuilder: (context, index) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final req = _requests[index];
+                  final String bookingId = req['id'].toString();
+                  
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -280,7 +304,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                           children: [
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () {},
+                                onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'declined'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.red, side: const BorderSide(color: Colors.red),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -291,7 +315,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'accepted'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

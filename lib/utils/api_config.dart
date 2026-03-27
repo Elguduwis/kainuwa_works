@@ -11,4 +11,5 @@ class ApiConfig {
   static const String createBooking = '$baseUrl/create_booking.php';
   static const String chatApi = '$baseUrl/chat_api.php';
   static const String getWorkerDashboard = '$baseUrl/get_worker_dashboard.php';
+  static const String updateBookingStatus = '$baseUrl/update_booking_status.php';
 }
