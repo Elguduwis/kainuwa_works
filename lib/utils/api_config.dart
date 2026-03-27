@@ -16,4 +16,8 @@ class ApiConfig {
   static const String fundEscrow = '$baseUrl/fund_escrow.php';
   static const String requestRelease = '$baseUrl/request_release.php';
   static const String releaseEscrow = '$baseUrl/release_escrow.php';
+  
+  static const String getWorkerWallet = '$baseUrl/get_worker_wallet.php';
+  static const String requestWithdrawal = '$baseUrl/request_withdrawal.php';
+  static const String getWorkerSettings = '$baseUrl/get_worker_settings.php';
 }

@@ -4,6 +4,8 @@ import '../../services/worker_service.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import 'worker_bookings.dart';
+import 'worker_wallet.dart';
+import 'worker_settings.dart';
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -15,7 +17,7 @@ class WorkerHomeScreen extends StatefulWidget {
 class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   int _selectedIndex = 0;
   bool _isLoading = true;
-  bool _isProcessingAction = false; // Prevents double-taps on Accept/Decline
+  bool _isProcessingAction = false;
   
   Map<String, dynamic>? _profile;
   Map<String, dynamic>? _wallet;
@@ -45,14 +47,13 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
 
   Future<void> _handleBookingAction(String bookingId, String status) async {
     setState(() => _isProcessingAction = true);
-    
     final res = await WorkerService.updateBookingStatus(bookingId, status);
     
     if (mounted) {
       setState(() => _isProcessingAction = false);
       if (res['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Success!'), backgroundColor: status == 'accepted' ? Colors.green : Colors.black87));
-        _loadDashboard(); // Refresh the list
+        _loadDashboard(); 
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Action failed'), backgroundColor: Colors.red));
       }
@@ -69,11 +70,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // ALL TABS ARE NOW FULLY WIRED UP
     final List<Widget> pages = [
       _buildHomeContent(theme),
       const WorkerBookingsScreen(),
-      const Center(child: Text('Earnings Wallet')),
-      const Center(child: Text('Profile & Settings')),
+      const WorkerWalletScreen(),
+      const WorkerSettingsScreen(),
     ];
 
     return Scaffold(
@@ -85,19 +87,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 children: [
                   pages[_selectedIndex],
                   if (_isProcessingAction)
-                    Container(
-                      color: Colors.black.withOpacity(0.3),
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
+                    Container(color: Colors.black.withOpacity(0.3), child: const Center(child: CircularProgressIndicator())),
                 ],
               ),
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
-          ],
-        ),
+        decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
@@ -140,36 +135,23 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Hello, $firstName',
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1F2937), letterSpacing: -0.5),
-                    ),
+                    Text('Hello, $firstName', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1F2937), letterSpacing: -0.5)),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Container(
-                          width: 8, height: 8,
-                          decoration: BoxDecoration(color: isAvailable ? Colors.green : Colors.orange, shape: BoxShape.circle),
-                        ),
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: isAvailable ? Colors.green : Colors.orange, shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text(
-                          isAvailable ? 'Available for work' : 'Currently Busy',
-                          style: TextStyle(fontSize: 14, color: isAvailable ? Colors.green : Colors.orange, fontWeight: FontWeight.bold),
-                        ),
+                        Text(isAvailable ? 'Available for work' : 'Currently Busy', style: TextStyle(fontSize: 14, color: isAvailable ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],
                 ),
                 GestureDetector(
-                  onTap: () async {
-                    await AuthService.logout();
-                    if (!mounted) return;
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                  },
+                  onTap: () => _onItemTapped(3), // Navigate to Profile Tab instead of Logout
                   child: CircleAvatar(
                     radius: 24,
                     backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                    child: Icon(Icons.logout_rounded, color: theme.colorScheme.primary, size: 20),
+                    child: Text(firstName.isNotEmpty ? firstName[0].toUpperCase() : 'W', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 18)),
                   ),
                 ),
               ],
@@ -179,44 +161,41 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 24),
-                        const SizedBox(height: 12),
-                        const Text('Available Earnings', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Text('₦${balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                      ],
+                  child: GestureDetector(
+                    onTap: () => _onItemTapped(2), // Navigate to Wallet
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 24),
+                          const SizedBox(height: 12),
+                          const Text('Available Earnings', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text('₦${balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.handyman_rounded, color: theme.colorScheme.primary, size: 24),
-                        const SizedBox(height: 12),
-                        const Text('Active Jobs', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Text('$_activeJobs', style: const TextStyle(color: Color(0xFF1F2937), fontSize: 24, fontWeight: FontWeight.bold)),
-                      ],
+                  child: GestureDetector(
+                    onTap: () => _onItemTapped(1), // Navigate to Jobs
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.handyman_rounded, color: theme.colorScheme.primary, size: 24),
+                          const SizedBox(height: 12),
+                          const Text('Active Jobs', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text('$_activeJobs', style: const TextStyle(color: Color(0xFF1F2937), fontSize: 24, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -227,16 +206,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Incoming Requests',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1F2937)),
-                ),
+                const Text('Incoming Requests', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1F2937))),
                 if (_requests.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
-                    child: Text('${_requests.length} New', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)), child: Text('${_requests.length} New', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
               ],
             ),
             const SizedBox(height: 16),
@@ -263,15 +235,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 itemBuilder: (context, index) {
                   final req = _requests[index];
                   final String bookingId = req['id'].toString();
-                  
                   return Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-                    ),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -306,10 +272,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                             Expanded(
                               child: OutlinedButton(
                                 onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'declined'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red, side: const BorderSide(color: Colors.red),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
+                                style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                                 child: const Text('Decline'),
                               ),
                             ),
@@ -317,10 +280,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'accepted'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
+                                style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                                 child: const Text('Accept'),
                               ),
                             ),

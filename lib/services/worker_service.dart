@@ -32,25 +32,39 @@ class WorkerService {
     return await _safePost(ApiConfig.getWorkerDashboard, {'user_id': userId});
   }
 
-  static Future<Map<String, dynamic>> requestRelease(String bookingId) async {
-    final userId = await getUserId();
-    if (userId == null) return {"status": "error", "message": "Session expired"};
-    return await _safePost(ApiConfig.requestRelease, {"user_id": userId, "booking_id": bookingId});
-  }
-
   static Future<Map<String, dynamic>> updateBookingStatus(String bookingId, String status) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    return await _safePost(ApiConfig.updateBookingStatus, {
-      'user_id': userId,
-      'booking_id': bookingId,
-      'status': status
-    });
+    return await _safePost(ApiConfig.updateBookingStatus, {'user_id': userId, 'booking_id': bookingId, 'status': status});
   }
 
   static Future<Map<String, dynamic>> fetchBookings() async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
     return await _safePost(ApiConfig.getWorkerBookings, {'user_id': userId});
+  }
+
+  static Future<Map<String, dynamic>> requestRelease(String bookingId) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.requestRelease, {'user_id': userId, 'booking_id': bookingId});
+  }
+
+  static Future<Map<String, dynamic>> fetchWallet() async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.getWorkerWallet, {'user_id': userId});
+  }
+
+  static Future<Map<String, dynamic>> requestWithdrawal(String amount, String bankDetails) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.requestWithdrawal, {'user_id': userId, 'amount': amount, 'bank_details': bankDetails});
+  }
+
+  static Future<Map<String, dynamic>> fetchSettings() async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.getWorkerSettings, {'user_id': userId});
   }
 }
