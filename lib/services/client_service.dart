@@ -59,7 +59,6 @@ class ClientService {
     return await _safePost(ApiConfig.createBooking, data);
   }
 
-  // --- NEW CHAT METHODS ---
   static Future<Map<String, dynamic>> fetchChatMessages(String bookingId, String lastId) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
@@ -79,6 +78,22 @@ class ClientService {
       'action': 'send',
       'booking_id': bookingId,
       'message': message
+    });
+  }
+
+  static Future<Map<String, dynamic>> releaseEscrow(String bookingId) async {
+    final userId = await getUserId();
+    if (userId == null) return {"status": "error", "message": "Session expired"};
+    return await _safePost(ApiConfig.releaseEscrow, {"user_id": userId, "booking_id": bookingId});
+  }
+
+  static Future<Map<String, dynamic>> fundEscrow(String bookingId, String amount) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.fundEscrow, {
+      'user_id': userId,
+      'booking_id': bookingId,
+      'amount': amount
     });
   }
 }

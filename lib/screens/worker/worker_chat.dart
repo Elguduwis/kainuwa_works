@@ -87,6 +87,37 @@ class _WorkerChatScreenState extends State<WorkerChatScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            child: IconButton(
+              icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.green),
+              tooltip: "Request Escrow Release",
+              onPressed: () async {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text("Job Completed?"),
+                    content: const Text("Are you sure you want to request payment release from the client?"),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final res = await WorkerService.requestRelease(widget.bookingId);
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res["message"] ?? "Requested"), backgroundColor: res["status"] == "success" ? Colors.green : Colors.red));
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                        child: const Text("Yes, Request"),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          )
+        ],
         backgroundColor: Colors.white,
         elevation: 1,
         title: Row(
