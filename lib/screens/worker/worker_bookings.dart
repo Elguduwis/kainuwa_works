@@ -52,7 +52,7 @@ class _WorkerBookingsScreenState extends State<WorkerBookingsScreen> {
           bottom: TabBar(
             indicatorColor: theme.colorScheme.primary,
             labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: const Color(0xFF6B7280),
+            unselectedLabelColor: Colors.grey,
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: const [Tab(text: 'Active Jobs'), Tab(text: 'History')],
           ),
@@ -61,15 +61,17 @@ class _WorkerBookingsScreenState extends State<WorkerBookingsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : TabBarView(
               children: [
-                _buildBookingList(_active, isActive: true),
-                _buildBookingList(_history, isActive: false),
+                _buildBookingList(_active, isActive: true, theme: theme),
+                _buildBookingList(_history, isActive: false, theme: theme),
               ],
             ),
       ),
     );
   }
 
-  Widget _buildBookingList(List<dynamic> list, {required bool isActive}) {
+  Widget _buildBookingList(List<dynamic> list, {required bool isActive, required ThemeData theme}) {
+    final isDark = theme.brightness == Brightness.dark;
+
     if (list.isEmpty) {
       return RefreshIndicator(
         onRefresh: _loadData,
@@ -81,9 +83,9 @@ class _WorkerBookingsScreenState extends State<WorkerBookingsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(isActive ? Icons.handyman_rounded : Icons.history_rounded, size: 64, color: Colors.grey[300]),
+                Icon(isActive ? Icons.handyman_rounded : Icons.history_rounded, size: 64, color: isDark ? Colors.grey[800] : Colors.grey[300]),
                 const SizedBox(height: 16),
-                Text(isActive ? 'No active jobs' : 'No past jobs', style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+                Text(isActive ? 'No active jobs' : 'No past jobs', style: TextStyle(fontSize: 16, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -104,22 +106,15 @@ class _WorkerBookingsScreenState extends State<WorkerBookingsScreen> {
           return GestureDetector(
             onTap: () {
               if (isActive) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => WorkerChatScreen(
-                      bookingId: b['id'].toString(),
-                      clientName: b['client_name'] ?? 'Client',
-                    ),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => WorkerChatScreen(bookingId: b['id'].toString(), clientName: b['client_name'] ?? 'Client')));
               }
             },
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: Column(
@@ -128,10 +123,10 @@ class _WorkerBookingsScreenState extends State<WorkerBookingsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(b['category_name'] ?? 'Service', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(b['category_name'] ?? 'Service', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.textTheme.bodyLarge?.color)),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(color: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(8)),
                         child: Text(
                           (b['status'] ?? '').toUpperCase(), 
                           style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusColor(b['status'])),
@@ -142,14 +137,14 @@ class _WorkerBookingsScreenState extends State<WorkerBookingsScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.person_outline_rounded, size: 16, color: Color(0xFF9CA3AF)),
+                      Icon(Icons.person_outline_rounded, size: 16, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
                       const SizedBox(width: 6),
-                      Text(b['client_name'] ?? 'Client', style: const TextStyle(color: Color(0xFF4B5563))),
+                      Text(b['client_name'] ?? 'Client', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF4B5563))),
                       if (isActive) ...[
                         const Spacer(),
-                        const Icon(Icons.chat_bubble_rounded, size: 16, color: Color(0xFF7351FF)),
+                        Icon(Icons.chat_bubble_rounded, size: 16, color: theme.colorScheme.primary),
                         const SizedBox(width: 4),
-                        const Text('Chat', style: TextStyle(color: Color(0xFF7351FF), fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text('Chat', style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.bold)),
                       ]
                     ],
                   ),
@@ -159,12 +154,12 @@ class _WorkerBookingsScreenState extends State<WorkerBookingsScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF9CA3AF)),
+                          Icon(Icons.location_on_outlined, size: 16, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
                           const SizedBox(width: 6),
-                          Text(b['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: const TextStyle(color: Color(0xFF4B5563), fontSize: 12)),
+                          Text(b['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF4B5563), fontSize: 12)),
                         ],
                       ),
-                      Text('₦${parsedAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
+                      Text('₦${parsedAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: theme.colorScheme.primary)),
                     ],
                   ),
                 ],
