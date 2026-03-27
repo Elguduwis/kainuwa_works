@@ -28,7 +28,6 @@ class WorkerService {
   static Future<Map<String, dynamic>> requestWithdrawal(String amount, String bankDetails) async => await _safePost(ApiConfig.requestWithdrawal, {'user_id': await getUserId(), 'amount': amount, 'bank_details': bankDetails});
   static Future<Map<String, dynamic>> fetchSettings() async => await _safePost(ApiConfig.getWorkerSettings, {'user_id': await getUserId()});
   static Future<Map<String, dynamic>> fetchPayoutMethods() async => await _safePost(ApiConfig.getPayoutMethods, {'user_id': await getUserId()});
-
   static Future<Map<String, dynamic>> updateAvailability(String status) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
@@ -36,17 +35,21 @@ class WorkerService {
     return await _safePost(url, {'user_id': userId, 'status': status});
   }
 
+  // FIXED: Parse the standard format returned by our updated get_banks.php
   static Future<List<dynamic>> fetchBanks() async {
     try {
       final res = await http.get(Uri.parse(ApiConfig.getBanks)).timeout(const Duration(seconds: 15));
-      if (res.statusCode == 200) return json.decode(res.body);
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        if (data['status'] == 'success') {
+          return data['banks'] ?? [];
+        }
+      }
       return [];
     } catch (e) { return []; }
   }
 
-  static Future<Map<String, dynamic>> resolveAccount(String accountNumber, String bankCode) async {
-    return await _safePost(ApiConfig.resolveAccount, {'account_number': accountNumber, 'bank_code': bankCode});
-  }
+  static Future<Map<String, dynamic>> resolveAccount(String accountNumber, String bankCode) async => await _safePost(ApiConfig.resolveAccount, {'account_number': accountNumber, 'bank_code': bankCode});
 
   static Future<Map<String, dynamic>> addPayoutMethod(Map<String, String> data) async {
     final userId = await getUserId();

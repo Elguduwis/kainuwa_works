@@ -42,26 +42,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     if (mounted) {
       setState(() {
         _isLoadingCategories = false;
-        if (data['status'] == 'success') {
-          _categories = data['categories'] ?? [];
-        }
+        if (data['status'] == 'success') _categories = data['categories'] ?? [];
       });
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
   void _navigateToSearch(String query) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ClientSearchScreen(initialQuery: query),
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ClientSearchScreen(initialQuery: query)));
   }
 
   @override
@@ -80,15 +69,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(child: pages[_selectedIndex]),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))],
-        ),
+        decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           type: BottomNavigationBarType.fixed,
           backgroundColor: theme.colorScheme.surface,
-          selectedItemColor: theme.colorScheme.primary,
+          selectedItemColor: isDark ? Colors.white : theme.colorScheme.primary,
           unselectedItemColor: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF),
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
@@ -129,8 +116,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   onTap: () => _onItemTapped(3),
                   child: CircleAvatar(
                     radius: 24,
-                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                    child: Text(_userName.isNotEmpty ? _userName[0].toUpperCase() : 'C', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 18)),
+                    backgroundColor: isDark ? Colors.white24 : theme.colorScheme.primary.withOpacity(0.1),
+                    child: Text(_userName.isNotEmpty ? _userName[0].toUpperCase() : 'C', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : theme.colorScheme.primary, fontSize: 18)),
                   ),
                 ),
               ],
@@ -139,22 +126,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 5))],
-              ),
+              decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 5))]),
               child: TextField(
                 textInputAction: TextInputAction.search,
                 style: TextStyle(color: theme.textTheme.bodyLarge?.color),
-                onSubmitted: (value) {
-                  if (value.trim().isNotEmpty) _navigateToSearch(value.trim());
-                },
+                onSubmitted: (value) { if (value.trim().isNotEmpty) _navigateToSearch(value.trim()); },
                 decoration: InputDecoration(
                   hintText: 'Search for plumbers, electricians...',
                   hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF), fontSize: 15),
                   border: InputBorder.none,
-                  icon: Icon(Icons.search_rounded, color: theme.colorScheme.primary),
+                  icon: Icon(Icons.search_rounded, color: isDark ? Colors.white : theme.colorScheme.primary),
                 ),
               ),
             ),
@@ -164,10 +145,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Top Categories', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: theme.textTheme.bodyLarge?.color)),
-                TextButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientCategoriesScreen())),
-                  child: Text('See All', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-                ),
+                TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientCategoriesScreen())), child: Text('See All', style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.primary, fontWeight: FontWeight.bold))),
               ],
             ),
             const SizedBox(height: 16),
@@ -191,18 +169,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientAllProvidersScreen())),
               child: Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-                ),
+                decoration: BoxDecoration(color: theme.colorScheme.surface, border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)), borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(color: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(16)),
-                      child: Icon(Icons.people_alt_rounded, color: theme.colorScheme.primary, size: 28),
+                      child: Icon(Icons.people_alt_rounded, color: isDark ? Colors.white : theme.colorScheme.primary, size: 28),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -228,20 +201,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   Widget _buildCategoryItem(IconData icon, String label, ThemeData theme, String categoryId, bool isDark) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => ClientSearchScreen(categoryId: categoryId, categoryName: label)));
-      },
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ClientSearchScreen(categoryId: categoryId, categoryName: label))),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-            ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 24),
+            decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+            child: Icon(icon, color: isDark ? Colors.white : theme.colorScheme.primary, size: 24),
           ),
           const SizedBox(height: 8),
           Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? Colors.grey[300] : const Color(0xFF4B5563)), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),

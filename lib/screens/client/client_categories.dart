@@ -68,7 +68,7 @@ class _ClientCategoriesScreenState extends State<ClientCategoriesScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(color: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(12)),
-                              child: Icon(IconHelper.getIcon(cat['icon']), color: theme.colorScheme.primary, size: 24),
+                              child: Icon(IconHelper.getIcon(cat['icon']), color: isDark ? Colors.white : theme.colorScheme.primary, size: 24),
                             ),
                             const SizedBox(height: 8),
                             Padding(

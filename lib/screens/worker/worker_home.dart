@@ -71,11 +71,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
   @override
   Widget build(BuildContext context) {
@@ -97,8 +93,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             : Stack(
                 children: [
                   pages[_selectedIndex],
-                  if (_isProcessingAction)
-                    Container(color: Colors.black.withOpacity(0.3), child: const Center(child: CircularProgressIndicator())),
+                  if (_isProcessingAction) Container(color: Colors.black.withOpacity(0.3), child: const Center(child: CircularProgressIndicator())),
                 ],
               ),
       ),
@@ -109,7 +104,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           onTap: _onItemTapped,
           type: BottomNavigationBarType.fixed,
           backgroundColor: theme.colorScheme.surface,
-          selectedItemColor: theme.colorScheme.primary,
+          selectedItemColor: isDark ? Colors.white : theme.colorScheme.primary,
           unselectedItemColor: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF),
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
@@ -153,11 +148,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                       onTap: () => _toggleAvailability(status),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isAvailable ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: isAvailable ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3))
-                        ),
+                        decoration: BoxDecoration(color: isAvailable ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: isAvailable ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3))),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -174,8 +165,8 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                   onTap: () => _onItemTapped(3),
                   child: CircleAvatar(
                     radius: 24,
-                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                    child: Text(firstName.isNotEmpty ? firstName[0].toUpperCase() : 'W', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 18)),
+                    backgroundColor: isDark ? Colors.white24 : theme.colorScheme.primary.withOpacity(0.1),
+                    child: Text(firstName.isNotEmpty ? firstName[0].toUpperCase() : 'W', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : theme.colorScheme.primary, fontSize: 18)),
                   ),
                 ),
               ],
@@ -189,7 +180,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                     onTap: () => _onItemTapped(2),
                     child: Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+                      decoration: BoxDecoration(color: isDark ? Colors.grey[800] : theme.colorScheme.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -197,7 +188,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                           const SizedBox(height: 12),
                           const Text('Available Earnings', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
-                          Text('₦${balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          Text('NGN ${balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -213,7 +204,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.handyman_rounded, color: theme.colorScheme.primary, size: 24),
+                          Icon(Icons.handyman_rounded, color: isDark ? Colors.white : theme.colorScheme.primary, size: 24),
                           const SizedBox(height: 12),
                           Text('Active Jobs', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
@@ -239,9 +230,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
 
             if (_requests.isEmpty)
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFF3F4F6))),
+                width: double.infinity, padding: const EdgeInsets.all(32), decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFF3F4F6))),
                 child: Column(
                   children: [
                     Icon(Icons.inbox_rounded, color: isDark ? Colors.grey[600] : const Color(0xFFD1D5DB), size: 48),
@@ -273,41 +262,17 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.person_outline_rounded, size: 16, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
-                            const SizedBox(width: 4),
-                            Text(req['client_name'] ?? 'Client', style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[400] : const Color(0xFF4B5563))),
-                          ],
-                        ),
+                        Row(children: [Icon(Icons.person_outline_rounded, size: 16, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)), const SizedBox(width: 4), Text(req['client_name'] ?? 'Client', style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[400] : const Color(0xFF4B5563)))]),
                         const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on_outlined, size: 16, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
-                            const SizedBox(width: 4),
-                            Text(req['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[400] : const Color(0xFF4B5563))),
-                          ],
-                        ),
+                        Row(children: [Icon(Icons.location_on_outlined, size: 16, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)), const SizedBox(width: 4), Text(req['service_location'] == 'client_location' ? 'Home Service' : 'Shop Visit', style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[400] : const Color(0xFF4B5563)))]),
                         Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6))),
                         Text(req['description'] ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280))),
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'declined'),
-                                style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                child: const Text('Decline'),
-                              ),
-                            ),
+                            Expanded(child: OutlinedButton(onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'declined'), style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Decline'))),
                             const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'accepted'),
-                                style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                child: const Text('Accept'),
-                              ),
-                            ),
+                            Expanded(child: ElevatedButton(onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'accepted'), style: ElevatedButton.styleFrom(backgroundColor: isDark ? Colors.white : theme.colorScheme.primary, foregroundColor: isDark ? Colors.black : Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Accept'))),
                           ],
                         ),
                       ],

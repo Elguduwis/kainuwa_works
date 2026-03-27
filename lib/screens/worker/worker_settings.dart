@@ -18,6 +18,7 @@ class WorkerSettingsScreen extends StatefulWidget {
 class _WorkerSettingsScreenState extends State<WorkerSettingsScreen> {
   bool _isLoading = true;
   Map<String, dynamic> _profileData = {};
+  double _points = 0.0;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _WorkerSettingsScreenState extends State<WorkerSettingsScreen> {
         _isLoading = false;
         if (data['status'] == 'success') {
           _profileData = data['profile'];
+          _points = double.tryParse(data['profile']['kaida_points']?.toString() ?? '0') ?? 0.0;
         }
       });
     }
@@ -67,11 +69,11 @@ class _WorkerSettingsScreenState extends State<WorkerSettingsScreen> {
                   children: [
                     Container(
                       width: 100, height: 100,
-                      decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: isDark ? Colors.white24 : theme.colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
                       clipBehavior: Clip.hardEdge,
                       child: profilePicture.isNotEmpty 
-                          ? Image.network('https://works.kainuwa.africa/uploads/avatars/$profilePicture', fit: BoxFit.cover, errorBuilder: (_,__,___) => Icon(Icons.person, color: theme.colorScheme.primary, size: 40))
-                          : Center(child: Text(fullName.isNotEmpty ? fullName[0].toUpperCase() : 'W', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))),
+                          ? Image.network('https://works.kainuwa.africa/uploads/avatars/$profilePicture', fit: BoxFit.cover, errorBuilder: (_,__,___) => Icon(Icons.person, color: isDark ? Colors.white : theme.colorScheme.primary, size: 40))
+                          : Center(child: Text(fullName.isNotEmpty ? fullName[0].toUpperCase() : 'W', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: isDark ? Colors.white : theme.colorScheme.primary))),
                     ),
                     const SizedBox(height: 16),
                     Text(fullName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
@@ -100,22 +102,35 @@ class _WorkerSettingsScreenState extends State<WorkerSettingsScreen> {
               ),
               const SizedBox(height: 40),
 
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), border: Border.all(color: Colors.orange.withOpacity(0.3)), borderRadius: BorderRadius.circular(16)),
+                child: Row(
+                  children: [
+                    Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.orange.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.stars_rounded, color: Colors.orange)),
+                    const SizedBox(width: 16),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${_points.toStringAsFixed(0)} Kaida Points', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.orange)), const Text('Earn points by completing jobs!', style: TextStyle(fontSize: 12, color: Colors.orange))])),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
               _buildMenuItem(Icons.edit_rounded, 'Edit Profile Details', () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => WorkerEditProfileScreen(profileData: _profileData))).then((_) => _loadData());
-              }, isDark),
+              }, isDark, theme),
               _buildMenuItem(Icons.verified_user_rounded, 'Upload KYC Documents', () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkerKycScreen())).then((_) => _loadData());
-              }, isDark),
+              }, isDark, theme),
               _buildMenuItem(Icons.photo_library_rounded, 'Manage Portfolio Images', () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const PortfolioManagerScreen()));
-              }, isDark),
+              }, isDark, theme),
               const SizedBox(height: 24),
               
               SwitchListTile(
                 title: const Text('Dark Mode', style: TextStyle(fontWeight: FontWeight.bold)),
-                secondary: Icon(isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded, color: theme.colorScheme.primary),
+                secondary: Icon(isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded, color: isDark ? Colors.white : theme.colorScheme.primary),
                 value: isDark,
-                activeColor: theme.colorScheme.primary,
+                activeColor: isDark ? Colors.white : theme.colorScheme.primary,
                 onChanged: (val) => themeProvider.toggleTheme(val),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -138,12 +153,12 @@ class _WorkerSettingsScreenState extends State<WorkerSettingsScreen> {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, bool isDark) {
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, bool isDark, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: ListTile(
         onTap: onTap,
-        leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: isDark ? Colors.grey[400] : const Color(0xFF4B5563), size: 20)),
+        leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: isDark ? Colors.white : theme.colorScheme.primary, size: 20)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
