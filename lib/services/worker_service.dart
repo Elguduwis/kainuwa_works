@@ -30,37 +30,32 @@ class WorkerService {
   static Future<Map<String, dynamic>> fetchPayoutMethods() async => await _safePost(ApiConfig.getPayoutMethods, {'user_id': await getUserId()});
   static Future<Map<String, dynamic>> updateAvailability(String status) async {
     final userId = await getUserId();
-    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    final url = '${ApiConfig.baseUrl}/update_availability.php';
-    return await _safePost(url, {'user_id': userId, 'status': status});
+    if (userId == null) return {'status': 'error'};
+    return await _safePost('${ApiConfig.baseUrl}/update_availability.php', {'user_id': userId, 'status': status});
   }
 
-  // FIXED: Parse the standard format returned by our updated get_banks.php
   static Future<List<dynamic>> fetchBanks() async {
     try {
       final res = await http.get(Uri.parse(ApiConfig.getBanks)).timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
-        if (data['status'] == 'success') {
-          return data['banks'] ?? [];
-        }
+        if (data['status'] == 'success') return data['banks'] ?? [];
       }
       return [];
     } catch (e) { return []; }
   }
 
   static Future<Map<String, dynamic>> resolveAccount(String accountNumber, String bankCode) async => await _safePost(ApiConfig.resolveAccount, {'account_number': accountNumber, 'bank_code': bankCode});
-
   static Future<Map<String, dynamic>> addPayoutMethod(Map<String, String> data) async {
     final userId = await getUserId();
-    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    if (userId == null) return {'status': 'error'};
     data['user_id'] = userId;
     return await _safePost(ApiConfig.addPayoutMethod, data);
   }
 
   static Future<Map<String, dynamic>> raiseDispute(String bookingId, String reason, String? imagePath) async {
     final userId = await getUserId();
-    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    if (userId == null) return {'status': 'error'};
     var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.raiseDispute));
     request.fields['user_id'] = userId;
     request.fields['booking_id'] = bookingId;
@@ -74,7 +69,7 @@ class WorkerService {
 
   static Future<Map<String, dynamic>> updateProfile(Map<String, String> data, String? imagePath) async {
     final userId = await getUserId();
-    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    if (userId == null) return {'status': 'error'};
     var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.updateProfile));
     request.fields['user_id'] = userId;
     request.fields['role'] = 'worker';
@@ -86,23 +81,9 @@ class WorkerService {
     } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
   }
 
-  static Future<Map<String, dynamic>> uploadPortfolioImages(List<String> imagePaths) async {
-    final userId = await getUserId();
-    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.uploadPortfolio));
-    request.fields['user_id'] = userId;
-    for (var path in imagePaths) {
-      request.files.add(await http.MultipartFile.fromPath('portfolio_images[]', path));
-    }
-    try {
-      var response = await request.send();
-      return json.decode(await response.stream.bytesToString());
-    } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
-  }
-
   static Future<Map<String, dynamic>> uploadKyc(String docType, String docPath, String selfiePath) async {
     final userId = await getUserId();
-    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    if (userId == null) return {'status': 'error'};
     var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.uploadKyc));
     request.fields['user_id'] = userId;
     request.fields['document_type'] = docType;
@@ -112,5 +93,18 @@ class WorkerService {
       var response = await request.send();
       return json.decode(await response.stream.bytesToString());
     } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
+  }
+
+  // FIXED: Single File Upload method to loop sequentially and dodge server limits
+  static Future<Map<String, dynamic>> uploadPortfolioImage(String imagePath) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.uploadPortfolio));
+    request.fields['user_id'] = userId;
+    request.files.add(await http.MultipartFile.fromPath('portfolio_image', imagePath));
+    try {
+      var response = await request.send();
+      return json.decode(await response.stream.bytesToString());
+    } catch (e) { return {'status': 'error', 'message': 'Upload failed. Network issue.'}; }
   }
 }

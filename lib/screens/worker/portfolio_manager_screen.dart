@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -49,26 +48,30 @@ class _PortfolioManagerScreenState extends State<PortfolioManagerScreen> {
       if (pickedFiles.isNotEmpty) {
         setState(() => _isUploading = true);
         
-        List<String> compressedPaths = [];
+        int successCount = 0;
         
+        // Loop and upload ONE BY ONE to bypass PHP post_max_size limits!
         for (var file in pickedFiles) {
           final targetPath = '${file.path}_comp_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          final compressed = await FlutterImageCompress.compressAndGetFile(file.path, targetPath, quality: 60);
-          if (compressed != null) compressedPaths.add(compressed.path);
-        }
-        
-        if (compressedPaths.isNotEmpty) {
-          final res = await WorkerService.uploadPortfolioImages(compressedPaths);
-          if (mounted) {
-            if (res['status'] == 'success') {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message']), backgroundColor: Colors.green));
-              _loadPortfolio();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to upload'), backgroundColor: Colors.red));
-            }
+          final compressed = await FlutterImageCompress.compressAndGetFile(
+            file.path, targetPath, quality: 40, minWidth: 800, minHeight: 800
+          );
+          
+          if (compressed != null) {
+            final res = await WorkerService.uploadPortfolioImage(compressed.path);
+            if (res['status'] == 'success') successCount++;
           }
         }
-        setState(() => _isUploading = false);
+        
+        if (mounted) {
+          setState(() => _isUploading = false);
+          if (successCount > 0) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Successfully uploaded $successCount images!'), backgroundColor: Colors.green));
+            _loadPortfolio();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to upload images.'), backgroundColor: Colors.red));
+          }
+        }
       }
     } else {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gallery permission required')));
@@ -102,7 +105,7 @@ class _PortfolioManagerScreenState extends State<PortfolioManagerScreen> {
                   },
                 ),
               if (_isUploading)
-                Container(color: Colors.black.withOpacity(0.6), child: const Center(child: CircularProgressIndicator())),
+                Container(color: Colors.black.withOpacity(0.6), child: const Center(child: CircularProgressIndicator(color: Colors.white))),
             ],
           ),
       floatingActionButton: FloatingActionButton.extended(
