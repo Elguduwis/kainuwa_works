@@ -46,9 +46,8 @@ class _SplashScreenState extends State<SplashScreen> {
     _checkSession();
   }
 
-  // Auto-Login Logic Engine
   _checkSession() async {
-    await Future.delayed(const Duration(milliseconds: 2500)); // Show splash screen briefly
+    await Future.delayed(const Duration(milliseconds: 2500));
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
     final role = prefs.getString('role');
@@ -74,8 +73,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Look! We are using your actual downloaded logo here!
-            Image.asset('assets/img/logo.png', width: 120, height: 120, errorBuilder: (context, error, stackTrace) => const Icon(Icons.handyman_rounded, size: 80, color: Colors.white)),
+            // Reverted back to the tools icon!
+            const Icon(Icons.handyman_rounded, size: 80, color: Colors.white),
             const SizedBox(height: 20),
             const Text(
               'Kainuwa Works',

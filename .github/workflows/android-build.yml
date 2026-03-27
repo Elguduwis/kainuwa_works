@@ -38,6 +38,14 @@ jobs:
     - name: Generate Custom App Icon
       run: flutter pub run flutter_launcher_icons
       
+    - name: Force Permanent Digital Signature
+      run: |
+        keytool -genkey -v -keystore android/app/kainuwa.jks -keyalg RSA -keysize 2048 -validity 10000 -alias kainuwa -storepass kainuwa123 -keypass kainuwa123 -dname "CN=Kainuwa Works, C=NG"
+        echo "android.signingConfigs.debug.storeFile = file('kainuwa.jks')" >> android/app/build.gradle
+        echo "android.signingConfigs.debug.storePassword = 'kainuwa123'" >> android/app/build.gradle
+        echo "android.signingConfigs.debug.keyAlias = 'kainuwa'" >> android/app/build.gradle
+        echo "android.signingConfigs.debug.keyPassword = 'kainuwa123'" >> android/app/build.gradle
+      
     - name: Build Google Play App Bundle (.aab)
       run: flutter build appbundle --release
       
