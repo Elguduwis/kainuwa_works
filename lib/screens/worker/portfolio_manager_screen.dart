@@ -39,24 +39,32 @@ class _PortfolioManagerScreenState extends State<PortfolioManagerScreen> {
     }
   }
 
-  Future<void> _uploadNewImage() async {
+  Future<void> _uploadNewImages() async {
     var photoStatus = await Permission.photos.request();
     var storageStatus = await Permission.storage.request();
     
     if (photoStatus.isGranted || storageStatus.isGranted) {
-      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-      if (picked != null) {
+      final List<XFile> pickedFiles = await ImagePicker().pickMultiImage();
+      
+      if (pickedFiles.isNotEmpty) {
         setState(() => _isUploading = true);
-        final compressed = await FlutterImageCompress.compressAndGetFile(picked.path, '${picked.path}_portfolio.jpg', quality: 60);
         
-        if (compressed != null) {
-          final res = await WorkerService.uploadPortfolioImage(compressed.path);
+        List<String> compressedPaths = [];
+        
+        for (var file in pickedFiles) {
+          final targetPath = '${file.path}_comp_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final compressed = await FlutterImageCompress.compressAndGetFile(file.path, targetPath, quality: 60);
+          if (compressed != null) compressedPaths.add(compressed.path);
+        }
+        
+        if (compressedPaths.isNotEmpty) {
+          final res = await WorkerService.uploadPortfolioImages(compressedPaths);
           if (mounted) {
             if (res['status'] == 'success') {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image uploaded!'), backgroundColor: Colors.green));
-              _loadPortfolio(); // Refresh grid
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message']), backgroundColor: Colors.green));
+              _loadPortfolio();
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed'), backgroundColor: Colors.red));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to upload'), backgroundColor: Colors.red));
             }
           }
         }
@@ -94,13 +102,13 @@ class _PortfolioManagerScreenState extends State<PortfolioManagerScreen> {
                   },
                 ),
               if (_isUploading)
-                Container(color: Colors.black.withOpacity(0.5), child: const Center(child: CircularProgressIndicator())),
+                Container(color: Colors.black.withOpacity(0.6), child: const Center(child: CircularProgressIndicator())),
             ],
           ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isUploading ? null : _uploadNewImage,
-        icon: const Icon(Icons.add_a_photo_rounded, color: Colors.white),
-        label: const Text('Add Photo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        onPressed: _isUploading ? null : _uploadNewImages,
+        icon: const Icon(Icons.add_photo_alternate_rounded, color: Colors.white),
+        label: const Text('Add Photos', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );

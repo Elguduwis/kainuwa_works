@@ -24,8 +24,11 @@ class ApiConfig {
   static const String getWorkerSettings = '$baseUrl/get_worker_settings.php';
   static const String updateProfile = '$baseUrl/update_profile.php';
   static const String uploadPortfolio = '$baseUrl/upload_portfolio.php';
-  
-  // NEW ENDPOINTS
   static const String uploadKyc = '$baseUrl/upload_kyc.php';
   static const String getPayoutMethods = '$baseUrl/get_payout_methods.php';
+  
+  // NEW ENDPOINTS
+  static const String getBanks = '$baseUrl/get_banks.php';
+  static const String resolveAccount = '$baseUrl/resolve_account.php';
+  static const String addPayoutMethod = '$baseUrl/add_payout_method.php';
 }

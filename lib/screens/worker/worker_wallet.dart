@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/worker_service.dart';
+import 'worker_add_bank_screen.dart';
 
 class WorkerWalletScreen extends StatefulWidget {
   const WorkerWalletScreen({super.key});
@@ -46,7 +47,7 @@ class _WorkerWalletScreenState extends State<WorkerWalletScreen> {
 
   void _showWithdrawalSheet() {
     if (_payoutMethods.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add a bank account in your Web Dashboard first.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add a bank account first.')));
       return;
     }
 
@@ -114,8 +115,8 @@ class _WorkerWalletScreenState extends State<WorkerWalletScreen> {
                         FocusScope.of(context).unfocus();
                         final amount = amountController.text.trim();
                         
-                        if (amount.isEmpty || double.tryParse(amount) == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid amount.')));
+                        if (amount.isEmpty || double.tryParse(amount) == null || double.parse(amount) < 1000) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Minimum withdrawal is NGN 1,000.')));
                           return;
                         }
                         
@@ -152,7 +153,23 @@ class _WorkerWalletScreenState extends State<WorkerWalletScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Earnings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), backgroundColor: Colors.transparent),
+      appBar: AppBar(
+        title: const Text('Earnings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), 
+        backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_balance_rounded),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkerAddBankScreen())).then((value) {
+                if (value == true) {
+                  setState(() => _isLoading = true);
+                  _loadData();
+                }
+              });
+            },
+          )
+        ],
+      ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
@@ -186,7 +203,7 @@ class _WorkerWalletScreenState extends State<WorkerWalletScreen> {
                     width: double.infinity, height: 56,
                     child: ElevatedButton.icon(
                       onPressed: _showWithdrawalSheet,
-                      icon: const Icon(Icons.account_balance_rounded),
+                      icon: const Icon(Icons.account_balance_wallet_rounded),
                       label: const Text('Withdraw Funds', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(backgroundColor: isDark ? Colors.white : Colors.black87, foregroundColor: isDark ? Colors.black : Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                     ),

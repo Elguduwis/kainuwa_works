@@ -22,9 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     if (identifier.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter both email/phone and password')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter both email/phone and password')));
       return;
     }
 
@@ -42,20 +40,17 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ClientHomeScreen()));
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'Login failed'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Login failed'), backgroundColor: Colors.redAccent));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -66,79 +61,46 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 Icon(Icons.handyman_rounded, size: 64, color: theme.colorScheme.primary),
                 const SizedBox(height: 24),
-                const Text(
-                  'Welcome back',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1F2937), letterSpacing: -0.5),
-                ),
+                Text('Welcome back', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: theme.textTheme.bodyLarge?.color, letterSpacing: -0.5)),
                 const SizedBox(height: 8),
-                const Text(
-                  'Enter your details to access your account.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
-                ),
+                Text('Enter your details to access your account.', textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280))),
                 const SizedBox(height: 40),
 
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
-                    ],
+                    border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('Email or Phone Number'),
-                      _buildTextField(
-                        controller: _emailController,
-                        hint: 'name@example.com',
-                        icon: Icons.person_outline,
-                      ),
+                      _buildLabel('Email or Phone Number', theme),
+                      _buildTextField(controller: _emailController, hint: 'name@example.com', icon: Icons.person_outline, theme: theme),
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildLabel('Password'),
+                          _buildLabel('Password', theme),
                           TextButton(
                             onPressed: () {},
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              'Forgot?',
-                              style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
+                            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                            child: Text('Forgot?', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      _buildTextField(
-                        controller: _passwordController,
-                        hint: '••••••••',
-                        icon: Icons.lock_outline,
-                        isPassword: true,
-                      ),
+                      _buildTextField(controller: _passwordController, hint: '••••••••', icon: Icons.lock_outline, isPassword: true, theme: theme),
                       const SizedBox(height: 32),
                       
                       SizedBox(
-                        width: double.infinity,
-                        height: 56,
+                        width: double.infinity, height: 56,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                          child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -149,15 +111,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account? ", style: TextStyle(color: Color(0xFF6B7280))),
+                    Text("Don't have an account? ", style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280))),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
-                      },
-                      child: Text(
-                        'Create one now',
-                        style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-                      ),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                      child: Text('Create one now', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -169,30 +126,25 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF374151))),
-    );
+  Widget _buildLabel(String text, ThemeData theme) {
+    return Padding(padding: const EdgeInsets.only(bottom: 8.0), child: Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: theme.textTheme.bodyLarge?.color)));
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon, bool isPassword = false}) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon, bool isPassword = false, required ThemeData theme}) {
+    final isDark = theme.brightness == Brightness.dark;
     return TextFormField(
       controller: controller,
       obscureText: isPassword && _obscurePassword,
-      style: const TextStyle(fontWeight: FontWeight.w500),
+      style: TextStyle(fontWeight: FontWeight.w500, color: theme.textTheme.bodyLarge?.color),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w400),
-        prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF), size: 22),
+        hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF), fontWeight: FontWeight.w400),
+        prefixIcon: Icon(icon, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF), size: 22),
         suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF9CA3AF), size: 20),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-              )
+            ? IconButton(icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF), size: 20), onPressed: () => setState(() => _obscurePassword = !_obscurePassword))
             : null,
         filled: true,
-        fillColor: const Color(0xFFF3F4F6),
+        fillColor: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         contentPadding: const EdgeInsets.symmetric(vertical: 18),
       ),

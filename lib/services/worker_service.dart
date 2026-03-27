@@ -36,6 +36,25 @@ class WorkerService {
     return await _safePost(url, {'user_id': userId, 'status': status});
   }
 
+  static Future<List<dynamic>> fetchBanks() async {
+    try {
+      final res = await http.get(Uri.parse(ApiConfig.getBanks)).timeout(const Duration(seconds: 15));
+      if (res.statusCode == 200) return json.decode(res.body);
+      return [];
+    } catch (e) { return []; }
+  }
+
+  static Future<Map<String, dynamic>> resolveAccount(String accountNumber, String bankCode) async {
+    return await _safePost(ApiConfig.resolveAccount, {'account_number': accountNumber, 'bank_code': bankCode});
+  }
+
+  static Future<Map<String, dynamic>> addPayoutMethod(Map<String, String> data) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    data['user_id'] = userId;
+    return await _safePost(ApiConfig.addPayoutMethod, data);
+  }
+
   static Future<Map<String, dynamic>> raiseDispute(String bookingId, String reason, String? imagePath) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
@@ -64,12 +83,14 @@ class WorkerService {
     } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
   }
 
-  static Future<Map<String, dynamic>> uploadPortfolioImage(String imagePath) async {
+  static Future<Map<String, dynamic>> uploadPortfolioImages(List<String> imagePaths) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
     var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.uploadPortfolio));
     request.fields['user_id'] = userId;
-    request.files.add(await http.MultipartFile.fromPath('portfolio_image', imagePath));
+    for (var path in imagePaths) {
+      request.files.add(await http.MultipartFile.fromPath('portfolio_images[]', path));
+    }
     try {
       var response = await request.send();
       return json.decode(await response.stream.bytesToString());
