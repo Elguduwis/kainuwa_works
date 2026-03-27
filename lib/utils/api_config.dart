@@ -4,6 +4,7 @@ class ApiConfig {
   static const String login = '$baseUrl/auth_login.php';
   static const String register = '$baseUrl/auth_register.php';
   static const String verifyOtp = '$baseUrl/verify_otp.php';
+  static const String resendOtp = '$baseUrl/resend_otp.php'; // NEW
   static const String getWallet = '$baseUrl/get_wallet.php';
   static const String getClientBookings = '$baseUrl/get_client_bookings.php';
   static const String getClientProfile = '$baseUrl/get_client_profile.php';
@@ -26,8 +27,6 @@ class ApiConfig {
   static const String uploadPortfolio = '$baseUrl/upload_portfolio.php';
   static const String uploadKyc = '$baseUrl/upload_kyc.php';
   static const String getPayoutMethods = '$baseUrl/get_payout_methods.php';
-  
-  // NEW ENDPOINTS
   static const String getBanks = '$baseUrl/get_banks.php';
   static const String resolveAccount = '$baseUrl/resolve_account.php';
   static const String addPayoutMethod = '$baseUrl/add_payout_method.php';

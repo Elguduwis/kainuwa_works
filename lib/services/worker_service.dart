@@ -45,7 +45,13 @@ class WorkerService {
     } catch (e) { return []; }
   }
 
-  static Future<Map<String, dynamic>> resolveAccount(String accountNumber, String bankCode) async => await _safePost(ApiConfig.resolveAccount, {'account_number': accountNumber, 'bank_code': bankCode});
+  // FIXED: Passes user_id to enforce strict name matching
+  static Future<Map<String, dynamic>> resolveAccount(String accountNumber, String bankCode) async {
+    final userId = await getUserId();
+    if (userId == null) return {'success': false, 'message': 'Session expired'};
+    return await _safePost(ApiConfig.resolveAccount, {'user_id': userId, 'account_number': accountNumber, 'bank_code': bankCode});
+  }
+
   static Future<Map<String, dynamic>> addPayoutMethod(Map<String, String> data) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error'};
@@ -95,7 +101,6 @@ class WorkerService {
     } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
   }
 
-  // FIXED: Single File Upload method to loop sequentially and dodge server limits
   static Future<Map<String, dynamic>> uploadPortfolioImage(String imagePath) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error', 'message': 'Session expired'};
@@ -105,6 +110,6 @@ class WorkerService {
     try {
       var response = await request.send();
       return json.decode(await response.stream.bytesToString());
-    } catch (e) { return {'status': 'error', 'message': 'Upload failed. Network issue.'}; }
+    } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
   }
 }

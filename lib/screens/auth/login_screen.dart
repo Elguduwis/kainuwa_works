@@ -3,6 +3,7 @@ import '../../services/auth_service.dart';
 import '../client/client_home.dart';
 import '../worker/worker_home.dart';
 import 'register_screen.dart';
+import 'otp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,6 +34,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (result['status'] == 'success') {
+      if (result['requires_otp'] == true) {
+        // Automatically request a fresh OTP and navigate to OTP screen
+        await AuthService.resendOtp(result['email']);
+        if (!mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => OtpScreen(email: result['email'], role: 'client'))); // Role doesn't matter much on login flow
+        return;
+      }
+
       final role = result['user']['role'];
       if (role == 'worker') {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WorkerHomeScreen()));
