@@ -41,4 +41,10 @@ class WorkerService {
       'status': status
     });
   }
+
+  static Future<Map<String, dynamic>> fetchBookings() async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
+    return await _safePost(ApiConfig.getWorkerBookings, {'user_id': userId});
+  }
 }

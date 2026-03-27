@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/worker_service.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import 'worker_bookings.dart';
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -70,7 +71,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
 
     final List<Widget> pages = [
       _buildHomeContent(theme),
-      const Center(child: Text('My Jobs (Active & History)')),
+      const WorkerBookingsScreen(),
       const Center(child: Text('Earnings Wallet')),
       const Center(child: Text('Profile & Settings')),
     ];
