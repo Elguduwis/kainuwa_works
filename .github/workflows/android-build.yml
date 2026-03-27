@@ -26,14 +26,15 @@ jobs:
     - name: Generate Platform Folders
       run: flutter create --platforms=android .
         
-    - name: Inject Required Permissions
+    - name: Change App Name & Inject Permissions
       run: |
+        sed -i 's/android:label="[^"]*"/android:label="Kaida Works"/g' android/app/src/main/AndroidManifest.xml
         sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
         
     - name: Install dependencies
       run: flutter pub get
       
-    - name: Set Custom Package Name (com.kainuwa.africa)
+    - name: Set Custom Package Name
       run: flutter pub run change_app_package_name:main com.kainuwa.africa
       
     - name: Generate Custom App Icon

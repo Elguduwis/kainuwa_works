@@ -95,7 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('How do you want to use Kainuwa?', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: textColor, height: 1.2, letterSpacing: -0.5)),
+          Text('How do you want to use Kaida Works?', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: textColor, height: 1.2, letterSpacing: -0.5)),
           const SizedBox(height: 8),
           Text('Select your account type to continue', textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: subTextColor)),
           const SizedBox(height: 40),

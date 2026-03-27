@@ -23,7 +23,7 @@ class KainuwaWorksApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      title: 'Kainuwa Works',
+      title: 'Kaida Works',
       debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
       theme: ThemeData(
@@ -101,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: const [
             Icon(Icons.handyman_rounded, size: 80, color: Colors.white),
             SizedBox(height: 20),
-            Text('Kainuwa Works', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+            Text('Kaida Works', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
             SizedBox(height: 24),
             SizedBox(width: 30, height: 30, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)),
           ],
