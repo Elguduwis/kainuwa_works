@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../services/client_service.dart'; // We can reuse the chat methods from here since they hit the same API
+import '../../services/client_service.dart'; 
+import '../../services/worker_service.dart'; // <-- THIS IS THE MISSING IMPORT!
 
 class WorkerChatScreen extends StatefulWidget {
   final String bookingId;
@@ -87,6 +88,20 @@ class _WorkerChatScreenState extends State<WorkerChatScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              child: Text(widget.clientName.isNotEmpty ? widget.clientName[0].toUpperCase() : 'C', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(widget.clientName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)), overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -117,21 +132,7 @@ class _WorkerChatScreenState extends State<WorkerChatScreen> {
               },
             ),
           )
-        ],
-        backgroundColor: Colors.white,
-        elevation: 1,
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-              child: Text(widget.clientName.isNotEmpty ? widget.clientName[0].toUpperCase() : 'C', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(widget.clientName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)), overflow: TextOverflow.ellipsis),
-            ),
-          ],
-        ),
+        ]
       ),
       body: Column(
         children: [
