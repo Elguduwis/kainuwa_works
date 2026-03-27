@@ -11,15 +11,19 @@ class AuthService {
         final data = json.decode(response.body);
         if (data['status'] == 'success' && data['requires_otp'] != true) {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setInt('user_id', data['user']['id']);
-          await prefs.setString('role', data['user']['role']);
-          await prefs.setString('full_name', data['user']['full_name']);
+          
+          // SAFELY PARSE ID TO PREVENT TYPE ERROR CRASH
+          int userId = int.tryParse(data['user']['id'].toString()) ?? 0;
+          await prefs.setInt('user_id', userId);
+          await prefs.setString('role', data['user']['role'].toString());
+          await prefs.setString('full_name', data['user']['full_name'].toString());
         }
         return data;
       }
       return {'status': 'error', 'message': 'Server error: ${response.statusCode}'};
     } catch (e) {
-      return {'status': 'error', 'message': 'Connection failed.'};
+      // EXPOSE THE ACTUAL ERROR INSTEAD OF A GENERIC MESSAGE
+      return {'status': 'error', 'message': 'App Error: $e'};
     }
   }
 
@@ -28,7 +32,9 @@ class AuthService {
       final response = await http.post(Uri.parse(ApiConfig.register), body: userData);
       if (response.statusCode == 200) return json.decode(response.body);
       return {'status': 'error', 'message': 'Server error: ${response.statusCode}'};
-    } catch (e) { return {'status': 'error', 'message': 'Connection failed.'}; }
+    } catch (e) { 
+      return {'status': 'error', 'message': 'App Error: $e'}; 
+    }
   }
 
   static Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
@@ -38,22 +44,28 @@ class AuthService {
         final data = json.decode(response.body);
         if (data['status'] == 'success') {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setInt('user_id', data['user']['id']);
-          await prefs.setString('role', data['user']['role']);
-          await prefs.setString('full_name', data['user']['full_name']);
+          
+          int userId = int.tryParse(data['user']['id'].toString()) ?? 0;
+          await prefs.setInt('user_id', userId);
+          await prefs.setString('role', data['user']['role'].toString());
+          await prefs.setString('full_name', data['user']['full_name'].toString());
         }
         return data;
       }
       return {'status': 'error', 'message': 'Server error: ${response.statusCode}'};
-    } catch (e) { return {'status': 'error', 'message': 'Connection failed.'}; }
+    } catch (e) { 
+      return {'status': 'error', 'message': 'App Error: $e'}; 
+    }
   }
 
   static Future<Map<String, dynamic>> resendOtp(String email) async {
     try {
       final response = await http.post(Uri.parse(ApiConfig.resendOtp), body: {'email': email});
       if (response.statusCode == 200) return json.decode(response.body);
-      return {'status': 'error', 'message': 'Server error'};
-    } catch (e) { return {'status': 'error', 'message': 'Connection failed'}; }
+      return {'status': 'error', 'message': 'Server error: ${response.statusCode}'};
+    } catch (e) { 
+      return {'status': 'error', 'message': 'App Error: $e'}; 
+    }
   }
 
   static Future<void> logout() async {
