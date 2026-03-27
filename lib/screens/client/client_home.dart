@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/auth_service.dart';
-import '../auth/login_screen.dart';
+import '../../services/client_service.dart';
+import '../../utils/icon_helper.dart';
 import 'client_bookings.dart';
 import 'client_wallet.dart';
 import 'client_settings.dart';
 import 'client_search.dart';
+import 'client_categories.dart';
+import 'client_all_providers.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -17,11 +19,14 @@ class ClientHomeScreen extends StatefulWidget {
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   int _selectedIndex = 0;
   String _userName = 'Client';
+  List<dynamic> _categories = [];
+  bool _isLoadingCategories = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadCategories();
   }
 
   Future<void> _loadUserData() async {
@@ -32,20 +37,30 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     });
   }
 
+  Future<void> _loadCategories() async {
+    final data = await ClientService.fetchCategories();
+    if (mounted) {
+      setState(() {
+        _isLoadingCategories = false;
+        if (data['status'] == 'success') {
+          _categories = data['categories'] ?? [];
+        }
+      });
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  void _navigateToSearch({String query = '', String categoryId = '0', String categoryName = 'Search Providers'}) {
+  void _navigateToSearch(String query) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ClientSearchScreen(
           initialQuery: query,
-          categoryId: categoryId,
-          categoryName: categoryName,
         ),
       ),
     );
@@ -95,147 +110,195 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   Widget _buildHomeContent(ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Good evening, $_userName 👋',
-                    style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+    return RefreshIndicator(
+      onRefresh: _loadCategories,
+      color: theme.colorScheme.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Good evening, $_userName 👋',
+                      style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Need a service?',
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1F2937), letterSpacing: -0.5),
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: () => _onItemTapped(3),
+                  child: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                    child: Text(
+                      _userName.isNotEmpty ? _userName[0].toUpperCase() : 'C',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 18),
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Need a service?',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1F2937), letterSpacing: -0.5),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Search Bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 5)),
+                ],
+              ),
+              child: TextField(
+                textInputAction: TextInputAction.search,
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty) {
+                    _navigateToSearch(value.trim());
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search for plumbers, electricians...',
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                  border: InputBorder.none,
+                  icon: Icon(Icons.search_rounded, color: theme.colorScheme.primary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Top Categories',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1F2937)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientCategoriesScreen())),
+                  child: Text('See All', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            _isLoadingCategories 
+              ? const Center(child: CircularProgressIndicator())
+              : GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  children: [
+                    ..._categories.take(7).map((cat) => _buildCategoryItem(IconHelper.getIcon(cat['icon']), cat['name'], theme, cat['id'].toString())),
+                    _buildMoreItem(theme),
+                  ],
+                ),
+            const SizedBox(height: 32),
+
+            // Browse All Providers Banner
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientAllProvidersScreen())),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(16)),
+                      child: Icon(Icons.people_alt_rounded, color: theme.colorScheme.primary, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Browse All Providers', style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.bold, fontSize: 16)),
+                          SizedBox(height: 4),
+                          Text('View all registered professionals by category.', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA3AF)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [theme.colorScheme.primary, const Color(0xFF5A3BE0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
+                    child: const Icon(Icons.shield_rounded, color: Colors.white, size: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('100% Secure Escrow', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        SizedBox(height: 4),
+                        Text('Your money is safe until the job is done perfectly.', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              GestureDetector(
-                onTap: () => _onItemTapped(3),
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                  child: Text(
-                    _userName.isNotEmpty ? _userName[0].toUpperCase() : 'C',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 18),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Search Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 5)),
-              ],
             ),
-            child: TextField(
-              textInputAction: TextInputAction.search,
-              onSubmitted: (value) {
-                if (value.trim().isNotEmpty) {
-                  _navigateToSearch(query: value.trim());
-                }
-              },
-              decoration: InputDecoration(
-                hintText: 'Search for plumbers, electricians...',
-                hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
-                border: InputBorder.none,
-                icon: Icon(Icons.search_rounded, color: theme.colorScheme.primary),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Top Categories',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1F2937)),
-              ),
-              TextButton(
-                onPressed: () => _navigateToSearch(categoryName: 'All Providers'),
-                child: Text('See All', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 4,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            children: [
-              // Assuming standard category IDs based on typical database inserts, tweak if needed
-              _buildCategoryItem(Icons.water_drop_rounded, 'Plumber', theme, '1'),
-              _buildCategoryItem(Icons.electrical_services_rounded, 'Electrician', theme, '2'),
-              _buildCategoryItem(Icons.cleaning_services_rounded, 'Cleaning', theme, '3'),
-              _buildCategoryItem(Icons.build_rounded, 'Generator', theme, '4'),
-              _buildCategoryItem(Icons.format_paint_rounded, 'Painter', theme, '5'),
-              _buildCategoryItem(Icons.handyman_rounded, 'Carpenter', theme, '6'),
-              _buildCategoryItem(Icons.ac_unit_rounded, 'AC Repair', theme, '7'),
-              _buildCategoryItem(Icons.more_horiz_rounded, 'More', theme, '0'),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [theme.colorScheme.primary, const Color(0xFF5A3BE0)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
-                  child: const Icon(Icons.shield_rounded, color: Colors.white, size: 32),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('100% Secure Escrow', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                      SizedBox(height: 4),
-                      Text('Your money is safe until the job is done perfectly.', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCategoryItem(IconData icon, String label, ThemeData theme, String categoryId) {
     return GestureDetector(
-      onTap: () => _navigateToSearch(categoryId: categoryId, categoryName: label),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ClientSearchScreen(
+              categoryId: categoryId,
+              categoryName: label,
+            ),
+          ),
+        );
+      },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -257,6 +320,33 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoreItem(ThemeData theme) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientCategoriesScreen())),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: const Icon(Icons.more_horiz_rounded, color: Color(0xFF6B7280), size: 24),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'More',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF4B5563)),
+            textAlign: TextAlign.center,
+            maxLines: 1,
           ),
         ],
       ),

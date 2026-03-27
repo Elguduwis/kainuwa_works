@@ -192,6 +192,7 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
     }
 
     final double rating = double.tryParse(_profile!['average_rating'].toString()) ?? 0.0;
+    final String imageUrl = _profile!['profile_picture'] ?? '';
     
     return Scaffold(
       backgroundColor: Colors.white,
@@ -213,9 +214,18 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(24)),
-                  child: Center(
-                    child: Text(_profile!['full_name'].toString()[0].toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                  ),
+                  clipBehavior: Clip.hardEdge,
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          'https://works.kainuwa.africa/uploads/avatars/$imageUrl',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Center(
+                            child: Text(_profile!['full_name'].toString()[0].toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                          ),
+                        )
+                      : Center(
+                          child: Text(_profile!['full_name'].toString()[0].toUpperCase(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                        ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -288,9 +298,20 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12),
                 itemCount: _portfolio.length,
                 itemBuilder: (ctx, idx) {
+                  final String imgUrl = _portfolio[idx]['image_path'] ?? '';
                   return Container(
-                    decoration: BoxDecoration(color: const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(16)),
-                    child: const Center(child: Icon(Icons.image, color: Colors.white)), 
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5E7EB), 
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    clipBehavior: Clip.hardEdge,
+                    child: imgUrl.isNotEmpty
+                        ? Image.network(
+                            'https://works.kainuwa.africa/uploads/portfolio/$imgUrl',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image_rounded, color: Colors.white)),
+                          )
+                        : const Center(child: Icon(Icons.image, color: Colors.white)), 
                   );
                 },
               ),
@@ -311,7 +332,6 @@ class _ClientWorkerProfileScreenState extends State<ClientWorkerProfileScreen> {
               child: IconButton(
                 icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF4B5563)),
                 onPressed: () {
-                  // Reverted to standard SnackBar instruction!
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please request a service to start a chat.'))
                   );

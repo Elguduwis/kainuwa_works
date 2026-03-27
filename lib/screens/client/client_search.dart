@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
-import 'client_worker_profile.dart'; // We are explicitly importing the profile screen here now
+import 'client_worker_profile.dart';
 
 class ClientSearchScreen extends StatefulWidget {
   final String initialQuery;
@@ -134,7 +134,7 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
   Widget _buildProviderCard(Map<String, dynamic> provider, ThemeData theme) {
     final double rating = double.tryParse(provider['average_rating'].toString()) ?? 0.0;
     final int reviews = int.tryParse(provider['total_reviews'].toString()) ?? 0;
-    
+    final String imageUrl = provider['profile_picture'] ?? '';
     final String status = provider['availability_status'] ?? 'offline';
     final Color statusColor = status == 'available' ? Colors.green : (status == 'busy' ? Colors.orange : Colors.grey);
 
@@ -167,12 +167,18 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
                   color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Center(
-                  child: Text(
-                    provider['full_name'].toString()[0].toUpperCase(),
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
-                  ),
-                ),
+                clipBehavior: Clip.hardEdge,
+                child: imageUrl.isNotEmpty
+                    ? Image.network(
+                        'https://works.kainuwa.africa/uploads/avatars/$imageUrl',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Text(provider['full_name'].toString()[0].toUpperCase(), style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                        ),
+                      )
+                    : Center(
+                        child: Text(provider['full_name'].toString()[0].toUpperCase(), style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                      ),
               ),
               const SizedBox(width: 16),
               
@@ -260,7 +266,6 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
               ),
               const SizedBox(width: 16),
               ElevatedButton(
-                // THIS IS THE FIX: It now navigates properly instead of showing a snackbar
                 onPressed: () {
                   Navigator.push(
                     context,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../client/client_home.dart';
-import '../worker/worker_home.dart';
+import 'otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,9 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = _passwordController.text;
 
     if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
       return;
     }
 
@@ -48,37 +45,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     
     if (!mounted) return;
 
-    if (result['status'] == 'success') {
-      if (_selectedRole == 'worker') {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const WorkerHomeScreen()),
-          (route) => false,
-        );
-      } else {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const ClientHomeScreen()),
-          (route) => false,
-        );
-      }
+    if (result['status'] == 'success' && result['requires_otp'] == true) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => OtpScreen(email: email, role: _selectedRole ?? 'client')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'Registration failed'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Registration failed'), backgroundColor: Colors.redAccent));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final bgColor = isDarkMode ? const Color(0xFF111827) : const Color(0xFFF9FAFB);
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF1F2937);
+    final subTextColor = isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280);
+    final cardColor = isDarkMode ? const Color(0xFF1F2937) : Colors.white;
 
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        iconTheme: IconThemeData(color: textColor),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () {
@@ -93,179 +80,85 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0.05, 0), end: Offset.zero).animate(animation),
-                child: child,
-              ),
-            );
-          },
-          child: _currentStep == 0 ? _buildRoleSelection(theme) : _buildRegistrationForm(theme),
+          child: _currentStep == 0 
+            ? _buildRoleSelection(theme, textColor, subTextColor, cardColor) 
+            : _buildRegistrationForm(theme, textColor, subTextColor, cardColor),
         ),
       ),
     );
   }
 
-  Widget _buildRoleSelection(ThemeData theme) {
+  Widget _buildRoleSelection(ThemeData theme, Color textColor, Color subTextColor, Color cardColor) {
     return SingleChildScrollView(
       key: const ValueKey(0),
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'How do you want to use Kainuwa?',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF1F2937), height: 1.2, letterSpacing: -0.5),
-          ),
+          Text('How do you want to use Kainuwa?', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: textColor, height: 1.2, letterSpacing: -0.5)),
           const SizedBox(height: 8),
-          const Text(
-            'Select your account type to continue',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
-          ),
+          Text('Select your account type to continue', textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: subTextColor)),
           const SizedBox(height: 40),
-          _buildRoleCard(
-            title: 'Hire Providers',
-            description: 'I need to find and book professionals for a job.',
-            icon: Icons.search_rounded,
-            role: 'client',
-            theme: theme,
-          ),
+          _buildRoleCard('Hire Providers', 'I need to find and book professionals for a job.', Icons.search_rounded, 'client', theme, textColor, subTextColor, cardColor),
           const SizedBox(height: 16),
-          _buildRoleCard(
-            title: 'Work as Provider',
-            description: 'I want to offer my services, get booked, and earn money.',
-            icon: Icons.work_outline_rounded,
-            role: 'worker',
-            theme: theme,
-          ),
+          _buildRoleCard('Work as Provider', 'I want to offer my services, get booked, and earn money.', Icons.work_outline_rounded, 'worker', theme, textColor, subTextColor, cardColor),
         ],
       ),
     );
   }
 
-  Widget _buildRoleCard({required String title, required String description, required IconData icon, required String role, required ThemeData theme}) {
+  Widget _buildRoleCard(String title, String description, IconData icon, String role, ThemeData theme, Color textColor, Color subTextColor, Color cardColor) {
     final isSelected = _selectedRole == role;
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedRole = role;
-          _currentStep = 1;
-        });
-      },
+      onTap: () => setState(() { _selectedRole = role; _currentStep = 1; }),
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? theme.colorScheme.primary : const Color(0xFFE5E7EB), width: 2),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
+          border: Border.all(color: isSelected ? theme.colorScheme.primary : (cardColor == Colors.white ? const Color(0xFFE5E7EB) : const Color(0xFF374151)), width: 2),
         ),
         child: Row(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: isSelected ? theme.colorScheme.primary : const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: isSelected ? Colors.white : const Color(0xFF6B7280), size: 28),
-            ),
+            Container(width: 56, height: 56, decoration: BoxDecoration(color: isSelected ? theme.colorScheme.primary : (cardColor == Colors.white ? const Color(0xFFF3F4F6) : const Color(0xFF374151)), borderRadius: BorderRadius.circular(16)), child: Icon(icon, color: isSelected ? Colors.white : subTextColor, size: 28)),
             const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
-                  const SizedBox(height: 4),
-                  Text(description, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.4)),
-                ],
-              ),
-            ),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)), const SizedBox(height: 4), Text(description, style: TextStyle(fontSize: 13, color: subTextColor, height: 1.4))])),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRegistrationForm(ThemeData theme) {
+  Widget _buildRegistrationForm(ThemeData theme, Color textColor, Color subTextColor, Color cardColor) {
     return SingleChildScrollView(
       key: const ValueKey(1),
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            _selectedRole == 'client' ? 'Sign up as Client' : 'Sign up as Provider',
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1F2937), letterSpacing: -0.5),
-          ),
+          Text(_selectedRole == 'client' ? 'Sign up as Client' : 'Sign up as Provider', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: textColor, letterSpacing: -0.5)),
           const SizedBox(height: 8),
-          const Text(
-            'Complete your profile details below.',
-            style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
-          ),
+          Text('Complete your profile details below.', style: TextStyle(fontSize: 15, color: subTextColor)),
           const SizedBox(height: 32),
-
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
-              ],
-            ),
+            decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(24)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildLabel('Full Name'),
-                _buildTextField(controller: _nameController, hint: 'John Doe', icon: Icons.person_outline),
+                _buildLabel('Full Name', textColor),
+                _buildTextField(controller: _nameController, hint: 'John Doe', icon: Icons.person_outline, cardColor: cardColor, textColor: textColor),
                 const SizedBox(height: 16),
-                
-                _buildLabel('Email Address'),
-                _buildTextField(controller: _emailController, hint: 'name@example.com', icon: Icons.mail_outline, keyboardType: TextInputType.emailAddress),
+                _buildLabel('Email Address', textColor),
+                _buildTextField(controller: _emailController, hint: 'name@example.com', icon: Icons.mail_outline, keyboardType: TextInputType.emailAddress, cardColor: cardColor, textColor: textColor),
                 const SizedBox(height: 16),
-                
-                _buildLabel('Phone Number'),
-                _buildTextField(controller: _phoneController, hint: '08012345678', icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+                _buildLabel('Phone Number', textColor),
+                _buildTextField(controller: _phoneController, hint: '08012345678', icon: Icons.phone_outlined, keyboardType: TextInputType.phone, cardColor: cardColor, textColor: textColor),
                 const SizedBox(height: 16),
-                
-                _buildLabel('Password'),
-                _buildTextField(controller: _passwordController, hint: '••••••••', icon: Icons.lock_outline, isPassword: true),
+                _buildLabel('Password', textColor),
+                _buildTextField(controller: _passwordController, hint: '••••••••', icon: Icons.lock_outline, isPassword: true, cardColor: cardColor, textColor: textColor),
                 const SizedBox(height: 32),
-                
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleRegister,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Create Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Center(
-                  child: Text(
-                    'By registering, you agree to our Terms of Service.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                  ),
-                ),
+                SizedBox(width: double.infinity, height: 56, child: ElevatedButton(onPressed: _isLoading ? null : _handleRegister, style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))), child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Create Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))),
               ],
             ),
           ),
@@ -274,33 +167,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF374151))),
-    );
-  }
+  Widget _buildLabel(String text, Color textColor) => Padding(padding: const EdgeInsets.only(bottom: 8.0), child: Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textColor)));
 
-  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon, bool isPassword = false, TextInputType? keyboardType}) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon, bool isPassword = false, TextInputType? keyboardType, required Color cardColor, required Color textColor}) {
+    final fillColor = cardColor == Colors.white ? const Color(0xFFF3F4F6) : const Color(0xFF374151);
     return TextFormField(
       controller: controller,
       obscureText: isPassword && _obscurePassword,
       keyboardType: keyboardType,
-      style: const TextStyle(fontWeight: FontWeight.w500),
+      style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w400),
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
         prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF), size: 22),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF9CA3AF), size: 20),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-              )
-            : null,
+        suffixIcon: isPassword ? IconButton(icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF9CA3AF), size: 20), onPressed: () => setState(() => _obscurePassword = !_obscurePassword)) : null,
         filled: true,
-        fillColor: const Color(0xFFF3F4F6),
+        fillColor: fillColor,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(vertical: 18),
       ),
     );
   }
