@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/worker_service.dart';
+import '../../widgets/custom_bottom_nav.dart';
 import 'worker_bookings.dart';
 import 'portfolio_manager_screen.dart';
 import 'worker_wallet.dart';
@@ -36,7 +37,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         if (data['status'] == 'success') {
           _profile = data['profile'];
           _requests = data['pending_requests'] ?? [];
-          // FIXED: Strictly parse as integer to prevent default to 0
           _activeJobs = int.tryParse(data['active_jobs_count']?.toString() ?? '0') ?? 0;
           _completedJobs = int.tryParse(data['completed_jobs_count']?.toString() ?? '0') ?? 0;
         }
@@ -93,26 +93,11 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 ],
               ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: theme.colorScheme.surface,
-          selectedItemColor: isDark ? Colors.white : theme.colorScheme.primary,
-          unselectedItemColor: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.handyman_rounded), label: 'Jobs'),
-            BottomNavigationBarItem(icon: Icon(Icons.photo_library_rounded), label: 'Portfolio'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_rounded), label: 'Wallet'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Profile'),
-          ],
-        ),
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        icons: const [Icons.dashboard_rounded, Icons.handyman_rounded, Icons.photo_library_rounded, Icons.account_balance_wallet_rounded, Icons.person_outline_rounded],
+        labels: const ['Home', 'Jobs', 'Portfolio', 'Wallet', 'Profile'],
       ),
     );
   }
@@ -169,7 +154,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             ),
             const SizedBox(height: 32),
 
-            // FIXED: Cards are now perfectly uniform and identical in styling.
             Row(
               children: [
                 Expanded(
@@ -194,7 +178,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _onItemTapped(1), // Navigates to jobs
+                    onTap: () => _onItemTapped(1),
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
@@ -269,7 +253,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                           children: [
                             Expanded(child: OutlinedButton(onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'declined'), style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Decline'))),
                             const SizedBox(width: 12),
-                            Expanded(child: ElevatedButton(onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'accepted'), style: ElevatedButton.styleFrom(backgroundColor: isDark ? Colors.white : theme.colorScheme.primary, foregroundColor: isDark ? Colors.black : Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Accept'))),
+                            Expanded(child: ElevatedButton(onPressed: _isProcessingAction ? null : () => _handleBookingAction(bookingId, 'accepted'), style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Accept'))),
                           ],
                         ),
                       ],

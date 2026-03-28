@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/client_service.dart';
 import '../../utils/icon_helper.dart';
+import '../../widgets/custom_bottom_nav.dart';
 import 'client_bookings.dart';
 import 'client_wallet.dart';
 import 'client_settings.dart';
@@ -68,25 +69,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(child: pages[_selectedIndex]),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: theme.colorScheme.surface,
-          selectedItemColor: isDark ? Colors.white : theme.colorScheme.primary,
-          unselectedItemColor: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.list_alt_rounded), label: 'Bookings'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_rounded), label: 'Wallet'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Profile'),
-          ],
-        ),
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        icons: const [Icons.home_rounded, Icons.list_alt_rounded, Icons.account_balance_wallet_rounded, Icons.person_outline_rounded],
+        labels: const ['Home', 'Bookings', 'Wallet', 'Profile'],
       ),
     );
   }
