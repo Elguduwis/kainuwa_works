@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/auth/login_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/client/client_home.dart';
 import 'screens/worker/worker_home.dart';
 import 'utils/theme_provider.dart';
@@ -87,7 +87,8 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ClientHomeScreen()));
       }
     } else {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      // Route new/unauthenticated users to the Onboarding Flow instead of Login directly
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const OnboardingScreen()));
     }
   }
 
