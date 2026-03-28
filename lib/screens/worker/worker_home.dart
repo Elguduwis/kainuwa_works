@@ -36,8 +36,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         if (data['status'] == 'success') {
           _profile = data['profile'];
           _requests = data['pending_requests'] ?? [];
-          _activeJobs = data['active_jobs_count'] ?? 0;
-          _completedJobs = data['completed_jobs_count'] ?? 0;
+          // FIXED: Strictly parse as integer to prevent default to 0
+          _activeJobs = int.tryParse(data['active_jobs_count']?.toString() ?? '0') ?? 0;
+          _completedJobs = int.tryParse(data['completed_jobs_count']?.toString() ?? '0') ?? 0;
         }
       });
     }
@@ -168,6 +169,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             ),
             const SizedBox(height: 32),
 
+            // FIXED: Cards are now perfectly uniform and identical in styling.
             Row(
               children: [
                 Expanded(
@@ -175,15 +177,15 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                     onTap: () => _onItemTapped(1),
                     child: Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+                      decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.handyman_rounded, color: Colors.white70, size: 24),
+                          Icon(Icons.handyman_rounded, color: theme.colorScheme.primary, size: 24),
                           const SizedBox(height: 12),
-                          const Text('Active Jobs', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+                          Text('Active Jobs', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
-                          Text('$_activeJobs', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          Text('$_activeJobs', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -191,18 +193,21 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.task_alt_rounded, color: Colors.green, size: 24),
-                        const SizedBox(height: 12),
-                        Text('Completed Jobs', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Text('$_completedJobs', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.bold)),
-                      ],
+                  child: GestureDetector(
+                    onTap: () => _onItemTapped(1), // Navigates to jobs
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.task_alt_rounded, color: Colors.green, size: 24),
+                          const SizedBox(height: 12),
+                          Text('Completed Jobs', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text('$_completedJobs', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
