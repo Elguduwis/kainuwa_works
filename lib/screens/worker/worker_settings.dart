@@ -4,9 +4,9 @@ import '../../services/auth_service.dart';
 import '../../services/worker_service.dart';
 import '../../utils/theme_provider.dart';
 import '../auth/login_screen.dart';
-import 'portfolio_manager_screen.dart';
 import 'worker_edit_profile.dart';
 import 'worker_kyc_screen.dart';
+import 'worker_payout_methods_screen.dart'; // NEW
 
 class WorkerSettingsScreen extends StatefulWidget {
   const WorkerSettingsScreen({super.key});
@@ -91,10 +91,7 @@ class _WorkerSettingsScreenState extends State<WorkerSettingsScreen> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: verificationStatus == 'approved' ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1), 
-                        borderRadius: BorderRadius.circular(12)
-                      ),
+                      decoration: BoxDecoration(color: verificationStatus == 'approved' ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
                       child: Text(verificationStatus == 'approved' ? 'VERIFIED' : 'KYC PENDING', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: verificationStatus == 'approved' ? Colors.green : Colors.orange)),
                     )
                   ],
@@ -121,8 +118,8 @@ class _WorkerSettingsScreenState extends State<WorkerSettingsScreen> {
               _buildMenuItem(Icons.verified_user_rounded, 'Upload KYC Documents', () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkerKycScreen())).then((_) => _loadData());
               }, isDark, theme),
-              _buildMenuItem(Icons.photo_library_rounded, 'Manage Portfolio Images', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const PortfolioManagerScreen()));
+              _buildMenuItem(Icons.account_balance_rounded, 'Payout Methods', () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkerPayoutMethodsScreen()));
               }, isDark, theme),
               const SizedBox(height: 24),
               

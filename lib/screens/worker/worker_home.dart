@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/worker_service.dart';
 import 'worker_bookings.dart';
+import 'portfolio_manager_screen.dart';
 import 'worker_wallet.dart';
 import 'worker_settings.dart';
 
@@ -18,9 +18,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   bool _isProcessingAction = false;
   
   Map<String, dynamic>? _profile;
-  Map<String, dynamic>? _wallet;
   List<dynamic> _requests = [];
   int _activeJobs = 0;
+  int _completedJobs = 0;
 
   @override
   void initState() {
@@ -35,9 +35,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         _isLoading = false;
         if (data['status'] == 'success') {
           _profile = data['profile'];
-          _wallet = data['wallet'];
           _requests = data['pending_requests'] ?? [];
           _activeJobs = data['active_jobs_count'] ?? 0;
+          _completedJobs = data['completed_jobs_count'] ?? 0;
         }
       });
     }
@@ -46,7 +46,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   Future<void> _handleBookingAction(String bookingId, String status) async {
     setState(() => _isProcessingAction = true);
     final res = await WorkerService.updateBookingStatus(bookingId, status);
-    
     if (mounted) {
       setState(() => _isProcessingAction = false);
       if (res['status'] == 'success') {
@@ -63,12 +62,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     setState(() => _isProcessingAction = true);
     final res = await WorkerService.updateAvailability(newStatus);
     setState(() => _isProcessingAction = false);
-    
-    if (res['status'] == 'success') {
-      _loadDashboard();
-    } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to update availability')));
-    }
+    if (res['status'] == 'success') _loadDashboard();
   }
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
@@ -81,6 +75,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     final List<Widget> pages = [
       _buildHomeContent(theme, isDark),
       const WorkerBookingsScreen(),
+      const PortfolioManagerScreen(),
       const WorkerWalletScreen(),
       const WorkerSettingsScreen(),
     ];
@@ -106,12 +101,13 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           backgroundColor: theme.colorScheme.surface,
           selectedItemColor: isDark ? Colors.white : theme.colorScheme.primary,
           unselectedItemColor: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
           elevation: 0,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.handyman_rounded), label: 'My Jobs'),
+            BottomNavigationBarItem(icon: Icon(Icons.handyman_rounded), label: 'Jobs'),
+            BottomNavigationBarItem(icon: Icon(Icons.photo_library_rounded), label: 'Portfolio'),
             BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_rounded), label: 'Wallet'),
             BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Profile'),
           ],
@@ -125,7 +121,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     final String firstName = name.split(' ')[0];
     final String status = _profile?['availability_status'] ?? 'offline';
     final bool isAvailable = status == 'available';
-    final double balance = double.tryParse(_wallet?['balance']?.toString() ?? '0') ?? 0.0;
 
     return RefreshIndicator(
       onRefresh: _loadDashboard,
@@ -162,7 +157,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                   ],
                 ),
                 GestureDetector(
-                  onTap: () => _onItemTapped(3),
+                  onTap: () => _onItemTapped(4),
                   child: CircleAvatar(
                     radius: 24,
                     backgroundColor: isDark ? Colors.white24 : theme.colorScheme.primary.withOpacity(0.1),
@@ -177,18 +172,18 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _onItemTapped(2),
+                    onTap: () => _onItemTapped(1),
                     child: Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: isDark ? Colors.grey[800] : theme.colorScheme.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+                      decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 24),
+                          const Icon(Icons.handyman_rounded, color: Colors.white70, size: 24),
                           const SizedBox(height: 12),
-                          const Text('Available Earnings', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+                          const Text('Active Jobs', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
-                          Text('NGN ${balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          Text('$_activeJobs', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -196,21 +191,18 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () => _onItemTapped(1),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.handyman_rounded, color: isDark ? Colors.white : theme.colorScheme.primary, size: 24),
-                          const SizedBox(height: 12),
-                          Text('Active Jobs', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 4),
-                          Text('$_activeJobs', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.task_alt_rounded, color: Colors.green, size: 24),
+                        const SizedBox(height: 12),
+                        Text('Completed Jobs', style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Text('$_completedJobs', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.bold)),
+                      ],
                     ),
                   ),
                 ),

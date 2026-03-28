@@ -45,7 +45,6 @@ class WorkerService {
     } catch (e) { return []; }
   }
 
-  // FIXED: Passes user_id to enforce strict name matching
   static Future<Map<String, dynamic>> resolveAccount(String accountNumber, String bankCode) async {
     final userId = await getUserId();
     if (userId == null) return {'success': false, 'message': 'Session expired'};
@@ -57,6 +56,19 @@ class WorkerService {
     if (userId == null) return {'status': 'error'};
     data['user_id'] = userId;
     return await _safePost(ApiConfig.addPayoutMethod, data);
+  }
+
+  // NEW DELETION ENDPOINTS
+  static Future<Map<String, dynamic>> deletePayoutMethod(String methodId) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error'};
+    return await _safePost(ApiConfig.deletePayoutMethod, {'user_id': userId, 'method_id': methodId});
+  }
+
+  static Future<Map<String, dynamic>> deletePortfolioImage(String imageId) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error'};
+    return await _safePost(ApiConfig.deletePortfolioImage, {'user_id': userId, 'image_id': imageId});
   }
 
   static Future<Map<String, dynamic>> raiseDispute(String bookingId, String reason, String? imagePath) async {
@@ -87,6 +99,18 @@ class WorkerService {
     } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
   }
 
+  static Future<Map<String, dynamic>> uploadPortfolioImage(String imagePath) async {
+    final userId = await getUserId();
+    if (userId == null) return {'status': 'error'};
+    var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.uploadPortfolio));
+    request.fields['user_id'] = userId;
+    request.files.add(await http.MultipartFile.fromPath('portfolio_image', imagePath));
+    try {
+      var response = await request.send();
+      return json.decode(await response.stream.bytesToString());
+    } catch (e) { return {'status': 'error', 'message': 'Upload failed. Network issue.'}; }
+  }
+
   static Future<Map<String, dynamic>> uploadKyc(String docType, String docPath, String selfiePath) async {
     final userId = await getUserId();
     if (userId == null) return {'status': 'error'};
@@ -95,18 +119,6 @@ class WorkerService {
     request.fields['document_type'] = docType;
     request.files.add(await http.MultipartFile.fromPath('document_image', docPath));
     request.files.add(await http.MultipartFile.fromPath('selfie_image', selfiePath));
-    try {
-      var response = await request.send();
-      return json.decode(await response.stream.bytesToString());
-    } catch (e) { return {'status': 'error', 'message': 'Upload failed.'}; }
-  }
-
-  static Future<Map<String, dynamic>> uploadPortfolioImage(String imagePath) async {
-    final userId = await getUserId();
-    if (userId == null) return {'status': 'error', 'message': 'Session expired'};
-    var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.uploadPortfolio));
-    request.fields['user_id'] = userId;
-    request.files.add(await http.MultipartFile.fromPath('portfolio_image', imagePath));
     try {
       var response = await request.send();
       return json.decode(await response.stream.bytesToString());
