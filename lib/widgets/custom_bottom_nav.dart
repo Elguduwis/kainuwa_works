@@ -22,17 +22,18 @@ class CustomBottomNav extends StatelessWidget {
     final activeColor = theme.colorScheme.primary;
     final inactiveColor = isDark ? Colors.grey[600]! : const Color(0xFF9CA3AF);
 
-    return SizedBox(
-      height: 85,
+    return Container(
+      height: 90,
+      color: Colors.transparent,
       child: Stack(
         children: [
           TweenAnimationBuilder<double>(
             tween: Tween(end: (currentIndex + 0.5) / icons.length),
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOutBack,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutBack,
             builder: (context, notchPosition, child) {
               return CustomPaint(
-                size: const Size(double.infinity, 85),
+                size: const Size(double.infinity, 90),
                 painter: UNotchPainter(
                   notchPosition: notchPosition,
                   bgColor: bgColor,
@@ -50,29 +51,29 @@ class CustomBottomNav extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width / icons.length,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
+                      // Active Icon at the TOP of the U
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 350),
                         curve: Curves.easeOutBack,
-                        transform: Matrix4.translationValues(0, isSelected ? 12 : -4, 0),
+                        top: isSelected ? 10 : 25, 
                         child: Icon(
                           icons[index],
                           color: isSelected ? activeColor : inactiveColor,
                           size: isSelected ? 28 : 24,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: isSelected ? 1.0 : 0.0,
-                        child: Text(
-                          labels[index],
-                          style: TextStyle(
-                            color: activeColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                      // Label at the bottom
+                      Positioned(
+                        bottom: 12,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: isSelected ? 1.0 : 0.0,
+                          child: Text(
+                            labels[index],
+                            style: TextStyle(color: activeColor, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -93,69 +94,51 @@ class UNotchPainter extends CustomPainter {
   final Color bgColor;
   final Color borderColor;
 
-  UNotchPainter({
-    required this.notchPosition,
-    required this.bgColor,
-    required this.borderColor,
-  });
+  UNotchPainter({required this.notchPosition, required this.bgColor, required this.borderColor});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = bgColor
-      ..style = PaintingStyle.fill;
-
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+    final paint = Paint()..color = bgColor..style = PaintingStyle.fill;
+    final borderPaint = Paint()..color = borderColor..style = PaintingStyle.stroke..strokeWidth = 1.5;
 
     final path = Path();
+    final double nPos = notchPosition * size.width;
+    final double radius = 30.0;
+    final double depth = 35.0; // Deeper U as per your sketch
+
     path.moveTo(0, 0);
-
-    final notchRadius = 26.0;
-    final notchCenter = notchPosition * size.width;
-
-    // Line from left edge to the start of the U
-    path.lineTo(notchCenter - notchRadius, 0);
+    path.lineTo(nPos - radius - 10, 0);
     
-    // The downward U-cutout (arc)
-    path.arcToPoint(
-      Offset(notchCenter + notchRadius, 0),
-      radius: Radius.circular(notchRadius),
-      clockwise: false,
+    // Smooth U curve
+    path.cubicTo(
+      nPos - radius, 0, 
+      nPos - radius + 5, depth, 
+      nPos, depth
+    );
+    path.cubicTo(
+      nPos + radius - 5, depth, 
+      nPos + radius, 0, 
+      nPos + radius + 10, 0
     );
 
-    // Line from the end of the U to the right edge
     path.lineTo(size.width, 0);
-    
-    // Close the shape downwards to fill the background color
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
 
-    // Draw shadow first, then the background block
-    canvas.drawShadow(path, Colors.black, 15, false);
+    canvas.drawShadow(path, Colors.black.withOpacity(0.2), 10, false);
     canvas.drawPath(path, paint);
-
-    // Draw the exact top border with the U-curve matching your sketch
+    
+    // Draw top border only
     final borderPath = Path();
     borderPath.moveTo(0, 0);
-    borderPath.lineTo(notchCenter - notchRadius, 0);
-    borderPath.arcToPoint(
-      Offset(notchCenter + notchRadius, 0),
-      radius: Radius.circular(notchRadius),
-      clockwise: false,
-    );
+    borderPath.lineTo(nPos - radius - 10, 0);
+    borderPath.cubicTo(nPos - radius, 0, nPos - radius + 5, depth, nPos, depth);
+    borderPath.cubicTo(nPos + radius - 5, depth, nPos + radius, 0, nPos + radius + 10, 0);
     borderPath.lineTo(size.width, 0);
-
     canvas.drawPath(borderPath, borderPaint);
   }
 
   @override
-  bool shouldRepaint(covariant UNotchPainter oldDelegate) {
-    return oldDelegate.notchPosition != notchPosition ||
-           oldDelegate.bgColor != bgColor ||
-           oldDelegate.borderColor != borderColor;
-  }
+  bool shouldRepaint(UNotchPainter old) => old.notchPosition != notchPosition;
 }
