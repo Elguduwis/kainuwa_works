@@ -68,7 +68,8 @@ class _WorkerPayoutMethodsScreenState extends State<WorkerPayoutMethodsScreen> {
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final theme = Theme.of(context); // <--- THE FIX IS HERE
+            final isDark = theme.brightness == Brightness.dark;
             
             return Padding(
               padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
