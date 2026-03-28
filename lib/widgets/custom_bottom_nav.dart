@@ -18,9 +18,11 @@ class CustomBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    
+    // Logic: In Dark Mode, active elements must be white for visibility
     final bgColor = theme.colorScheme.surface;
-    final activeColor = theme.colorScheme.primary;
-    final inactiveColor = isDark ? Colors.grey[600]! : const Color(0xFF9CA3AF);
+    final activeColor = isDark ? Colors.white : theme.colorScheme.primary;
+    final inactiveColor = isDark ? Colors.grey[500]! : const Color(0xFF9CA3AF);
 
     return Container(
       height: 90,
@@ -54,18 +56,18 @@ class CustomBottomNav extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Active Icon at the TOP of the U
+                      // FIXED: Elevated top position so icon floats above the U-line
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 350),
                         curve: Curves.easeOutBack,
-                        top: isSelected ? 10 : 25, 
+                        top: isSelected ? 4 : 25, // Shifted from 10 to 4 to move it UP
                         child: Icon(
                           icons[index],
                           color: isSelected ? activeColor : inactiveColor,
                           size: isSelected ? 28 : 24,
                         ),
                       ),
-                      // Label at the bottom
+                      // Label at the bottom - White in Dark Mode
                       Positioned(
                         bottom: 12,
                         child: AnimatedOpacity(
@@ -73,7 +75,11 @@ class CustomBottomNav extends StatelessWidget {
                           opacity: isSelected ? 1.0 : 0.0,
                           child: Text(
                             labels[index],
-                            style: TextStyle(color: activeColor, fontSize: 11, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: activeColor, 
+                              fontSize: 11, 
+                              fontWeight: FontWeight.bold
+                            ),
                           ),
                         ),
                       ),
@@ -104,12 +110,11 @@ class UNotchPainter extends CustomPainter {
     final path = Path();
     final double nPos = notchPosition * size.width;
     final double radius = 30.0;
-    final double depth = 35.0; // Deeper U as per your sketch
+    final double depth = 35.0; 
 
     path.moveTo(0, 0);
     path.lineTo(nPos - radius - 10, 0);
     
-    // Smooth U curve
     path.cubicTo(
       nPos - radius, 0, 
       nPos - radius + 5, depth, 
@@ -129,7 +134,6 @@ class UNotchPainter extends CustomPainter {
     canvas.drawShadow(path, Colors.black.withOpacity(0.2), 10, false);
     canvas.drawPath(path, paint);
     
-    // Draw top border only
     final borderPath = Path();
     borderPath.moveTo(0, 0);
     borderPath.lineTo(nPos - radius - 10, 0);
@@ -140,5 +144,5 @@ class UNotchPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(UNotchPainter old) => old.notchPosition != notchPosition;
+  bool shouldRepaint(UNotchPainter old) => old.notchPosition != notchPosition || old.bgColor != bgColor;
 }
